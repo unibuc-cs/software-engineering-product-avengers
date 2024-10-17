@@ -33,11 +33,20 @@ kotlin {
     
     sourceSets {
         val desktopMain by getting
+        val voyagerVersion = "1.1.0-beta02"
+        val koin = "3.2.0"
         
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.android)
+            // Hilt integration
+            implementation(libs.voyager.hilt)
+
+            // LiveData integration
+            implementation(libs.voyager.livedata)
+
+            implementation("io.insert-koin:koin-android:$koin")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -53,6 +62,39 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+
+            // Navigator
+            implementation(libs.voyager.navigator)
+
+            // Screen Model
+            implementation(libs.voyager.screenmodel)
+
+            // BottomSheetNavigator
+            implementation(libs.voyager.bottom.sheet.navigator)
+
+            // TabNavigator
+            implementation(libs.voyager.tab.navigator)
+
+            // Transitions
+            implementation(libs.voyager.transitions)
+
+            // Android
+
+            // Koin integration
+            implementation("cafe.adriel.voyager:voyager-koin:$voyagerVersion")
+
+            // Desktop + Android
+
+            // Kodein integration
+            implementation(libs.voyager.kodein)
+
+            // RxJava integration
+            implementation(libs.voyager.rxjava)
+
+            // Koin
+            implementation("io.insert-koin:koin-core:$koin")
+            implementation("io.insert-koin:koin-test:$koin")
+
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

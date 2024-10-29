@@ -115,7 +115,27 @@ class RootScreen : Screen {
             }
 
             else -> {
-                Navigator(RootScreen())
+                TabNavigator(HomeTab) {
+                    Scaffold(modifier = Modifier.background(Color(0xFF13171B))
+                        .navigationBarsPadding().statusBarsPadding(), bottomBar = {
+                        BottomNavigation(
+                            modifier = Modifier, backgroundColor = Color(0xFF13171B)
+                        ) {
+                            BottomBarNavigationItem(
+                                tab = HomeTab
+                            )
+                            BottomBarNavigationItem(
+                                tab = DetailTab
+                            )
+                        }
+                    }) { innerPadding ->
+                        Box(
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            CurrentTab()
+                        }
+                    }
+                }
             }
         }
     }

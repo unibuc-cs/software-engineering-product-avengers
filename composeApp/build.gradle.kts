@@ -48,6 +48,14 @@ kotlin {
 
             implementation("io.insert-koin:koin-android:$koin")
             implementation("com.amadeus:amadeus-android:1.3.1")
+
+            // Desktop + Android
+            // Kodein integration
+            implementation(libs.voyager.kodein)
+            // RxJava integration
+            implementation(libs.voyager.rxjava)
+
+
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -79,27 +87,29 @@ kotlin {
             // Transitions
             implementation(libs.voyager.transitions)
 
-            // Android
 
+            // Android
             // Koin integration
             implementation("cafe.adriel.voyager:voyager-koin:$voyagerVersion")
-
-            // Desktop + Android
-
-            // Kodein integration
-            implementation(libs.voyager.kodein)
-
-            // RxJava integration
-            implementation(libs.voyager.rxjava)
 
             // Koin
             implementation("io.insert-koin:koin-core:$koin")
             implementation("io.insert-koin:koin-test:$koin")
 
+            //stately aparent
+            implementation("co.touchlab:stately-common:2.0.5")
+
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+
+            // Desktop + Android
+            // Kodein integration
+            implementation(libs.voyager.kodein)
+
+            // RxJava integration
+            implementation(libs.voyager.rxjava)
         }
     }
 }

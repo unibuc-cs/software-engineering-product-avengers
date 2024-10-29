@@ -47,6 +47,7 @@ kotlin {
             implementation(libs.voyager.livedata)
 
             implementation("io.insert-koin:koin-android:$koin")
+            implementation("com.amadeus:amadeus-android:1.3.1")
         }
         commonMain.dependencies {
             implementation(compose.runtime)

@@ -1,4 +1,4 @@
-package com.mready.travelmonster.ui.home
+package com.mready.travelmonster.ui.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -13,24 +13,19 @@ import androidx.compose.ui.graphics.Color
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
-import cafe.adriel.voyager.koin.getNavigatorScreenModel
-import cafe.adriel.voyager.koin.getScreenModel
-import cafe.adriel.voyager.koin.koinNavigatorScreenModel
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mready.travelmonster.getPlatform
-import com.mready.travelmonster.ui.detail.DetailScreen
+import com.mready.travelmonster.ui.home.HomeScreenModel
 
-
-class HomeScreen : Screen {
+class DetailScreen : Screen {
     override val key: ScreenKey = uniqueScreenKey
 
     @Composable
     override fun Content() {
-       // val screenModel = koinScreenModel<HomeScreenModel>()
+        val screenModel = koinScreenModel<DetailScreenModel>()
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = navigator.koinNavigatorScreenModel<HomeScreenModel>()
 
         Column(
             modifier = Modifier
@@ -41,12 +36,12 @@ class HomeScreen : Screen {
             Text(text = "Hello $key ${getPlatform()}")
             Button(
                 onClick = {
-                    navigator.push(DetailScreen())
+                    navigator.pop()
                 }
             ) {
-                Text("Go to Detail")
+                Text("Back")
             }
-            destinations.forEach { destination ->
+            destinations.forEach {destination ->
                 Text(text = destination.city)
             }
         }

@@ -3,7 +3,7 @@ package com.mready.travelmonster.api
 import com.mready.travelmonster.models.Destination
 
 class MockApi {
-    fun getDestinations() = listOf(
+    suspend fun getDestinations() = listOf(
         Destination("Paris", "France"),
         Destination("New York", "USA"),
         Destination("Tokyo", "Japan"),

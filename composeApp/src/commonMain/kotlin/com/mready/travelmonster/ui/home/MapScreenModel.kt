@@ -2,14 +2,13 @@ package com.mready.travelmonster.ui.home
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import com.mready.travelmonster.Platform
 import com.mready.travelmonster.api.MockApi
 import com.mready.travelmonster.models.Destination
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class HomeScreenModel(private val mockApi: MockApi) : ScreenModel {
+class MapScreenModel(private val mockApi: MockApi) : ScreenModel {
     var destinations = MutableStateFlow<List<Destination>>(emptyList())
         private set
 

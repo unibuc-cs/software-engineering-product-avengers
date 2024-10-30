@@ -1,4 +1,4 @@
-package com.mready.travelmonster.ui.home
+package com.mready.travelmonster.ui.detail
 
 import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.navigator.Navigator
@@ -8,17 +8,17 @@ import org.jetbrains.compose.resources.painterResource
 import travelmonster.composeapp.generated.resources.Res
 import travelmonster.composeapp.generated.resources.compose_multiplatform
 
-object HomeTab : Tab {
+object ItineraryTab : Tab {
     override val options: TabOptions
         @Composable
         get() = TabOptions(
-            index = 0u,
-            title = "Home",
+            index = 1u,
+            title = "Detail",
             icon = painterResource(Res.drawable.compose_multiplatform)
         )
 
     @Composable
     override fun Content() {
-        Navigator(HomeScreen())
+        Navigator(ItineraryScreen())
     }
 }

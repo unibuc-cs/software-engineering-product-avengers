@@ -93,7 +93,7 @@ class RootScreen : Screen {
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                NavigationRailItemWrapper(tab = MapTab) // map tab
+                                NavigationRailItemWrapper(tab = MapTab)
 
                                 Column(
                                     modifier = Modifier
@@ -102,7 +102,7 @@ class RootScreen : Screen {
                                     verticalArrangement = Arrangement.SpaceBetween,
                                     horizontalAlignment = CenterHorizontally
                                 ) {
-                                    NavigationRailItemWrapper(tab = ItineraryTab) // itinerary tab
+                                    NavigationRailItemWrapper(tab = ItineraryTab)
 
                                     Icon(
                                         modifier = Modifier.size(36.dp)

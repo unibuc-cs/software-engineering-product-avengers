@@ -12,7 +12,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun App() {
     MaterialTheme {
         val platform = getPlatform().name
-        when {
+        Navigator(RootScreen())
+        /*when {
             platform.contains("Android", ignoreCase = true) -> {
                 Navigator(RootScreen())
             }
@@ -22,6 +23,6 @@ fun App() {
             else -> {
                 Navigator(RootScreen())
             }
-        }
+        }*/
     }
 }

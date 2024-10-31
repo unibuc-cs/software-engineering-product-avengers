@@ -7,7 +7,13 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.secrets.gradle)
     kotlin("plugin.serialization") version "2.0.0"
+}
+
+secrets {
+    propertiesFileName = "secrets.properties"
+    defaultPropertiesFileName = "local.defaults.properties"
 }
 
 kotlin {
@@ -17,7 +23,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     jvm("desktop")
     
     listOf(
@@ -55,6 +61,14 @@ kotlin {
             // RxJava integration
             implementation(libs.voyager.rxjava)
 
+            //google maps
+            implementation("com.google.android.gms:play-services-maps:19.0.0")
+
+            // Google Maps dependencies
+            implementation("com.google.maps.android:maps-compose:3.1.1")
+            implementation("com.google.maps.android:maps-compose-utils:3.1.1")
+            implementation("com.google.maps.android:maps-compose-widgets:3.1.1")
+            implementation("com.google.android.gms:play-services-maps:18.2.0")
 
         }
         commonMain.dependencies {
@@ -99,6 +113,7 @@ kotlin {
             //stately aparent
             implementation("co.touchlab:stately-common:2.0.5")
 
+
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -134,6 +149,9 @@ android {
         getByName("release") {
             isMinifyEnabled = false
         }
+    }
+    buildFeatures {
+        buildConfig = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

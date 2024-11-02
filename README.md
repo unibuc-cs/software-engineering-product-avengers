@@ -1,4 +1,5 @@
 #Product Features
+
 ###Flight Search
 INPUT: Database of flights
 ACTIVATION: User introduces details of the flight such as date, number of passengers

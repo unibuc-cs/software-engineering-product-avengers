@@ -1,16 +1,13 @@
 # Product Features
 
-### Flight Search
+## Flight Search
 
 INPUT: Database of flights
-
 ACTIVATION: User introduces details of the flight such as date, number of passengers
-
 ACTION: App searches for flights, compares prices in real-time and filters options based on preferences
-
 OUTPUT: A curated list of flight options
 
-### Accommodation Recommendations
+## Accommodation Recommendations
 
 INPUT: Database of accommodations
 
@@ -20,7 +17,7 @@ ACTION: App retrieves and compares accommodation options from multiple booking p
 
 OUTPUT: A list of personalized accommodations options with booking links and reviews
 
-### Nearby Attractions and Activities
+## Nearby Attractions and Activities
 
 INPUT: User's location and personal interests
 
@@ -30,7 +27,7 @@ ACTION: App generates a selection of attractions and activities, based on user i
 
 OUTPUT: A map with nearby locations which the user can explore
 
-### Itinerary 
+## Itinerary 
 
 INPUT: Data about the user's trip 
 

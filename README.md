@@ -3,8 +3,11 @@
 ## Flight Search
 
 INPUT: Database of flights
+
 ACTIVATION: User introduces details of the flight such as date, number of passengers
+
 ACTION: App searches for flights, compares prices in real-time and filters options based on preferences
+
 OUTPUT: A curated list of flight options
 
 ## Accommodation Recommendations

@@ -1,27 +1,26 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\elena\\source\\repos\\mainApp\\mainApp.Server\\mainApp.Server.csproj": {}
+    "/Users/alexandrazamfirescu/software-engineering-product-avengers/mainApp.Server/mainApp.Server.csproj": {}
   },
   "projects": {
-    "C:\\Users\\elena\\source\\repos\\mainApp\\mainApp.Server\\mainApp.Server.csproj": {
+    "/Users/alexandrazamfirescu/software-engineering-product-avengers/mainApp.Server/mainApp.Server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\elena\\source\\repos\\mainApp\\mainApp.Server\\mainApp.Server.csproj",
+        "projectUniqueName": "/Users/alexandrazamfirescu/software-engineering-product-avengers/mainApp.Server/mainApp.Server.csproj",
         "projectName": "mainApp.Server",
-        "projectPath": "C:\\Users\\elena\\source\\repos\\mainApp\\mainApp.Server\\mainApp.Server.csproj",
-        "packagesPath": "C:\\Users\\elena\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\elena\\source\\repos\\mainApp\\mainApp.Server\\obj\\",
+        "projectPath": "/Users/alexandrazamfirescu/software-engineering-product-avengers/mainApp.Server/mainApp.Server.csproj",
+        "packagesPath": "/Users/alexandrazamfirescu/.nuget/packages/",
+        "outputPath": "/Users/alexandrazamfirescu/software-engineering-product-avengers/mainApp.Server/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\elena\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/Users/alexandrazamfirescu/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "/usr/local/share/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -34,11 +33,6 @@
           "warnAsError": [
             "NU1605"
           ]
-        },
-        "restoreAuditProperties": {
-          "enableAudit": "true",
-          "auditLevel": "low",
-          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -73,7 +67,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.101/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

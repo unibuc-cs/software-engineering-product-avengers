@@ -42,6 +42,73 @@ OUTPUT: A day-by-day travel itinerary with booking details, activity times, and 
 
 # User Stories
 
+
+
+# Design
+## Context Diagram (level 1)
+
+![image](C4_Diagram/img/lvl1.png)
+
+The Context Diagram provides a high-level overview of the Travel Monster application and its interactions with external systems and users.
+
+- **User**: Represents the person using the app to explore destinations, book flights, accommodations, and manage itineraries.
+- **Travel Monster System**: The core application that offers travel recommendations, booking services, and itinerary management.
+- **External Systems**:
+  - **Amadeus API**: Supplies flight information with industry-grade data.
+  - **Google APIs**: Offers location data, maps, and routes for nearby attractions.
+
+### Relationships
+- The user interacts with the Travel Monster System.
+- The Travel Monster System retrieves flight information from the Amadeus API.
+- The Travel Monster System fetches location and map data from Google APIs.
+
+
+## Container Diagram (level 2)
+
+![image](C4_Diagram/img/lvl2.png)
+
+The Container Diagram details the internal architecture of the Travel Monster application, illustrating how different containers interact to serve user needs.
+
+- **User**: Accesses the application via Web, Mobile, or Desktop.
+- **Containers**:
+  - **Web Application**: Built with React and TypeScript, provides the user interface for web users.
+  - **Mobile App**: Developed using Kotlin Multiplatform for mobile user interaction.
+  - **Desktop App**: Also developed using Kotlin Multiplatform for desktop user interaction.
+  - **API Gateway**: Routes requests to backend services using .NET.
+  - **Flight Service**: Handles flight searches and integrates with the Amadeus API.
+  - **Accommodation Service**: Fetches and filters accommodations.
+  - **Attractions Service**: Suggests location-based attractions.
+  - **Itinerary Service**: Manages user itineraries.
+  - **Database**: Stores user data, preferences, and itineraries.
+
+### Relationships
+- Users interact with the web, mobile, and desktop applications.
+- Each frontend container communicates with the API Gateway, which routes requests to the appropriate backend services.
+
+
+## Component Diagram (level 3)
+
+![image](C4_Diagram/img/lvl3.png)
+
+The Component Diagram breaks down the Travel Monster application into its key components, focusing on the interactions within the backend services.
+
+- **User**: Utilizes the Travel Monster application to manage itineraries, with roles including Admin, Guest, and Registered User.
+- **Key Components**:
+  - **API Gateway**: Routes requests to the appropriate backend services.
+  - **Authentication Service**: Manages user authentication and authorization.
+  - **Logging Service**: Logs API requests and responses.
+  - **Flight Service**: Contains controllers and repositories for handling flight-related requests.
+  - **Accommodation Service**: Manages accommodation data.
+  - **Attractions Service**: Handles attraction-related requests.
+  - **Itinerary Service**: Manages user itineraries and interacts with the database.
+  - **External APIs**: Integrates with Amadeus and Google APIs for flight and accommodation data.
+
+### Relationships
+- The user interacts with the API Gateway to make API requests.
+- The API Gateway communicates with various services to handle user requests.
+- Each service has its own controller and repository for managing data and operations.
+
+
 # Requirements
 
 # Backlog

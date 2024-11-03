@@ -1,0 +1,98 @@
+@startuml Component Diagram
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "User", "Uses the Travel Monster application to manage travel itineraries. Roles: Admin, Guest, Registered User") 
+
+System_Boundary(api_gateway, "API Gateway") {
+    Container(api_gateway_component, "API Gateway", "ASP.NET Core MVC", "Routes requests to backend services") #2520c7
+    Component(auth_service, "Authentication Service", "ASP.NET Core MVC", "Handles user authentication and authorization") #d9a3f5
+    Component(logging_service, "Logging Service", "ASP.NET Core MVC", "Logs API requests and responses") #ffcc66
+
+}
+
+' backend services
+System_Boundary(flight_service, "Flight Service") {
+    Component(flight_controller, "Flight Controller", "ASP.NET Core MVC", "Handles requests related to flight searches") #9372ed
+    Component(flight_repository, "Flight Repository", "ASP.NET Core MVC", "Fetches flight data from Amadeus API") #9372ed
+}
+
+System_Boundary(accommodation_service, "Accommodation Service") {
+    Component(accommodation_controller, "Accommodation Controller", "ASP.NET Core MVC", "Handles requests related to accommodations") #9372ed
+    Component(accommodation_repository, "Accommodation Repository", "ASP.NET Core MVC", "Fetches accommodation data from Google") #9372ed
+}
+
+System_Boundary(attractions_service, "Attractions Service") {
+    Component(attractions_controller, "Attractions Controller", "ASP.NET Core MVC", "Handles requests for attractions") #9372ed
+    Component(attractions_repository, "Attractions Repository", "ASP.NET Core MVC", "Fetches attractions data from Google Places")#9372ed
+}
+
+System_Boundary(itinerary_service, "Itinerary Service") {
+    Component(itinerary_controller, "Itinerary Controller", "ASP.NET Core MVC", "Manages user itineraries") #9372ed
+    Component(itinerary_repository, "Itinerary Repository", "ASP.NET Core MVC", "Stores and retrieves itinerary data") #9372ed
+}
+
+
+' external systems
+System_Boundary(amadeus_api, "Amadeus API") {
+    Component(amadeus_api_component, "Amadeus API Component", "ASP.NET Core MVC", "Fetches flight data") #9372ed
+}
+
+System_Boundary(google_api, "Google APIs") {
+    Component(google_api_component, "Google API Component", "ASP.NET Core MVC", "Fetches accommodation and attractions data") #9372ed
+}
+
+' database
+ContainerDb(database, "Database", "Database Technology", "Stores user data, preferences, and itineraries") #LightSkyBlue
+
+
+' user interactions
+user ..> api_gateway_component : "makes API requests"
+
+' api gateway interactions
+api_gateway_component ..> auth_service : "authenticates user"
+api_gateway_component ..> flight_controller : "routes flight requests"
+api_gateway_component ..> accommodation_controller : "routes accommodation requests"
+api_gateway_component ..> attractions_controller : "routes attractions requests"
+api_gateway_component ..> itinerary_controller : "routes itinerary requests"
+
+' flight service interactions
+flight_controller ..> flight_repository : "retrieves flight data \nfrom Amadeus"
+
+' accommodation service interactions
+accommodation_controller ..> accommodation_repository : "retrieves \naccommodation \ndata from \nGoogle Places"
+
+' attractions service interactions
+attractions_controller ..> attractions_repository : "retrieves attractions \ndata from \nGoogle Places"
+
+' itinerary service interactions
+itinerary_controller ..> itinerary_repository : "stores/retrieves \nitinerary data"
+
+' connecting to external systems
+flight_repository ..> amadeus_api_component : "fetches flight data" 
+accommodation_repository ..> google_api_component : "fetches accommodation data" 
+attractions_repository ..> google_api_component : "fetches attractions data"
+
+' connecting to database
+itinerary_repository ..> database : "stores/retrieves \nitinerary data"
+
+' legend
+skinparam legend {
+  backgroundColor #GhostWhite
+  entrySeparator #GhostWhite
+    FontColor #000000
+  
+}
+
+legend top right
+  <#GhostWhite,#GhostWhite>|        |= __Legend__ |
+  |<#DarkBlue>   | User|
+  |<#2520c7>  | API Gateway|
+  |<#9372ed> | Backend Components|
+  |<#d9a3f5> | Authentication Service Component|
+  |<#ffcc66> | Logging Service Component|
+  |<#LightSkyBlue> | Database|
+
+
+endlegend
+
+@enduml

@@ -1,0 +1,66 @@
+@startuml Container Diagram
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "User", "Accesses the Travel Monster app via Web, Mobile or Desktop versions")
+
+System_Boundary(travelapp, "Travel Monster System") {
+    Container(webapp, "Web Application", "React + TypeScript", "Provides user interface for web users") #4287f5
+    Container(mobileapp, "Mobile App", "Kotlin Multiplatform", "Provides mobile user interface")  #4287f5
+    Container(desktopapp, "Desktop App", "Kotlin Multiplatform", "Provides desktop user interface") #4287f5
+    Container(api_gateway, "API Gateway", ".NET", "Routes requests to backend services") #2520c7
+
+    Container(flight_service, "Flight Service", ".NET", "Handles flight search and Amadeus API calls") #331d61
+    Container(accommodation_service, "Accommodation Service", ".NET", "Fetches and filters accommodations") #331d61
+    Container(attractions_service, "Attractions Service", ".NET", "Generates location-based attraction suggestions") #331d61
+    Container(itinerary_service, "Itinerary Service", ".NET", "Manages user itineraries and syncs with calendar") #331d61
+
+    ContainerDb(database, "Database", "Relational DB Schema", "Stores user data, preferences, and itineraries") #LightSkyBlue
+}
+
+System_Ext(amadeus, "Amadeus API", "Provides flight data")
+System_Ext(google, "Google APIs", "Provides Places, Maps, and Routes data")
+
+
+' Frontend 
+user ..> webapp : visits the website using [HTTPS]
+user ..> desktopapp : views and manages flights, accommodations, and itineraries using
+user ..> mobileapp : views and manages flights, accommodations, and itineraries using
+
+' Backend
+webapp ..> api_gateway : "makes API \nrequests" 
+mobileapp ..> api_gateway : "makes API \nrequests"
+desktopapp ..> api_gateway : "makes API \nrequests"
+
+' API Gateway
+api_gateway ..> flight_service : routes flight requests
+api_gateway ..> accommodation_service : routes accommodation requests
+api_gateway ..> attractions_service : routes attractions requests
+api_gateway ..> itinerary_service : routes itinerary requests
+
+' Backend Services
+flight_service ..> amadeus : fetches flight data from
+accommodation_service ..> google : fetches accommodation data
+attractions_service ..> google : fetches attraction data from Google Places, Maps, Routes
+itinerary_service ..> database : stores and retrieves itinerary data
+
+
+' Legend 
+skinparam legend {
+  backgroundColor #GhostWhite
+  entrySeparator #GhostWhite
+    FontColor #000000
+  
+}
+
+legend right
+  <#GhostWhite,#GhostWhite>|        |= __Legend__ |
+  |<#DarkBlue>   | User|
+  |<#4287f5>  | Frontend|
+  |<#2520c7>  | API Gateway|
+  |<#331d61> | Backend|
+  |<#LightSkyBlue> | Database|
+  |<#Gray> | External Systems|
+  
+endlegend
+
+@enduml

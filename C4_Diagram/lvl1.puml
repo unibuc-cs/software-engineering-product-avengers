@@ -1,0 +1,18 @@
+@startuml Context Diagram
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+' Level 1 - System Context
+Person(user, "User", "The person using the app to explore destinations, book flights and accommodations, and manage itineraries")
+System(travelapp, "Travel Monster System", "The app that provides travel recommendations, booking, and itinerary management")
+
+System_Ext(amadeus, "Amadeus API", "Provides flight information with industry-grade data")
+System_Ext(googleapi, "Google APIs", "Provides location data, maps, and routes for nearby attractions")
+
+user ..> travelapp : interacts with
+travelapp ..> amadeus : retrieves flight information from
+travelapp ..> googleapi : retrieves location and map data from
+
+@enduml
+
+
+

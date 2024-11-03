@@ -54,6 +54,9 @@ OUTPUT: A day-by-day travel itinerary with booking details, activity times, and 
 
 
 # Design
+
+![image](C4_Diagram/img/C4.png)
+
 ## Context Diagram (level 1)
 
 ![image](C4_Diagram/img/lvl1.png)

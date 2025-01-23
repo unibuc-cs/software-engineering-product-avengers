@@ -1,0 +1,9 @@
+﻿# Ignoră directoarele generate de Visual Studio
+.vs/
+bin/
+obj/
+
+# Ignoră alte fișiere temporare
+*.user
+*.suo
+*.vsidx

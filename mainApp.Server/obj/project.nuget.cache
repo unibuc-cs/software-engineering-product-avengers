@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "g7Pmq2+Md3U=",
+  "dgSpecHash": "dSdkVrdfn/I=",
   "success": true,
   "projectFilePath": "C:\\Users\\Darius Corneciu\\source\\repos\\unibuc-cs\\software-engineering-product-avengers\\mainApp.Server\\mainApp.Server.csproj",
   "expectedPackageFiles": [
@@ -132,6 +132,8 @@
     "C:\\Users\\Darius Corneciu\\.nuget\\packages\\nuget.projectmodel\\6.11.0\\nuget.projectmodel.6.11.0.nupkg.sha512",
     "C:\\Users\\Darius Corneciu\\.nuget\\packages\\nuget.protocol\\6.11.0\\nuget.protocol.6.11.0.nupkg.sha512",
     "C:\\Users\\Darius Corneciu\\.nuget\\packages\\nuget.versioning\\6.11.0\\nuget.versioning.6.11.0.nupkg.sha512",
+    "C:\\Users\\Darius Corneciu\\.nuget\\packages\\sendgrid\\9.29.3\\sendgrid.9.29.3.nupkg.sha512",
+    "C:\\Users\\Darius Corneciu\\.nuget\\packages\\starkbank-ecdsa\\1.3.3\\starkbank-ecdsa.1.3.3.nupkg.sha512",
     "C:\\Users\\Darius Corneciu\\.nuget\\packages\\swashbuckle.aspnetcore\\6.4.0\\swashbuckle.aspnetcore.6.4.0.nupkg.sha512",
     "C:\\Users\\Darius Corneciu\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.4.0\\swashbuckle.aspnetcore.swagger.6.4.0.nupkg.sha512",
     "C:\\Users\\Darius Corneciu\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.4.0\\swashbuckle.aspnetcore.swaggergen.6.4.0.nupkg.sha512",

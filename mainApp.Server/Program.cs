@@ -1,11 +1,12 @@
 using mainApp.Server.Controllers;
 using mainApp.Server.Data;
+using mainApp.Server.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Build.Experimental;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
-using ReactApp1.Server.Data;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,10 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton<EmailService>();
+
+
 builder.Services.Configure<IdentityOptions>(options =>
 {
     options.User.RequireUniqueEmail = true;
@@ -33,16 +38,9 @@ app.UseStaticFiles();
 app.MapGroup("/api").MapIdentityApi<ApplicationUser>();
 
 
-app.MapPost("/logout", async (SignInManager<ApplicationUser> signInManager) =>
-{
-
-    await signInManager.SignOutAsync();
-    return Results.Ok();
-
-}).RequireAuthorization();
 
 
-app.MapIdentityUserEndPoints();
+
 
 
 // Configure the HTTP request pipeline.

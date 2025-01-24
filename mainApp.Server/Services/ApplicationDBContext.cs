@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace ReactApp1.Server.Data
+namespace mainApp.Server.Services
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {

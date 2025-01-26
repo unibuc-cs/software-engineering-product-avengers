@@ -23,7 +23,7 @@ namespace mainApp.Server.Controllers
     }
 
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class IdentityUserController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -34,9 +34,6 @@ namespace mainApp.Server.Controllers
         {
             _userManager = userManager;
             _signInManager = signInManager;
-           
-           
-
         }
 
         [HttpPost("signup")]

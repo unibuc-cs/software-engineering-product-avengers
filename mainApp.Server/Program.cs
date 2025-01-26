@@ -30,17 +30,18 @@ builder.Services.Configure<IdentityOptions>(options =>
   
 });
 
+builder.Services.Configure<AmadeusSettings>(builder.Configuration.GetSection("AmadeusSettings"));
+
+builder.Services.AddHttpClient<AmadeusClient>(client =>
+{
+    client.BaseAddress = new Uri("https://test.api.amadeus.com/");
+});
 
 var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapGroup("/api").MapIdentityApi<ApplicationUser>();
-
-
-
-
-
 
 
 // Configure the HTTP request pipeline.

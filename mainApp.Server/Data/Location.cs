@@ -2,7 +2,7 @@
 
 namespace mainApp.Server.Data
 {
-    public class Locations
+    public class Location
     {
         [Key]
         public int Id { get; set; }
@@ -12,7 +12,7 @@ namespace mainApp.Server.Data
         public string Address { get; set; }
         public string LocationLat { get; set; }
         public string LocationLng { get; set; }
-        public ICollection<Itineraries>? itineraries { get; set; }
+        public ICollection<Itinerary>? itineraries { get; set; }
 
     }
 }

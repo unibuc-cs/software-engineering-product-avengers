@@ -11,7 +11,6 @@ namespace mainApp.Server.Data
         public int Duration { get; set; }
         public DateTime Arrival { get; set; }
         public DateTime Departure { get; set; }
-        public int Price { get; set; }
 
         public Flight? NextFlight { get; set; }
         public virtual ICollection<Ticket>? Tickets { get; set; }

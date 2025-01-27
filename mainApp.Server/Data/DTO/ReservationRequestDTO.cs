@@ -11,7 +11,8 @@ namespace mainApp.Server.Data.DTO
     public class PassengerDto
     {
         public string FullName { get; set; }
-        public string Type { get; set; }
+        public bool BagajMana { get; set; }
+        public bool BagajCala { get; set; }
     }
 
 }

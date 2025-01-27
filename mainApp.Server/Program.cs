@@ -41,7 +41,7 @@ var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
-app.MapGroup("/api").MapIdentityApi<ApplicationUser>();
+//app.MapGroup("/api").MapIdentityApi<ApplicationUser>();
 
 
 // Configure the HTTP request pipeline.

@@ -27,47 +27,44 @@ namespace mainApp.Server.Controllers
                 throw new Exception("User not found.");
             }
 
-            foreach (var flightOffer in reservationResponse.Data.FlightOffers)
+            foreach (var flightOffer in reservationResponse.Flight.Itineraries)
             {
                 Flight? previousFlight = null;
                 Flight? firstFlight = null;
 
-                foreach (var itinerary in flightOffer.Itineraries)
+                foreach (var segment in flightOffer.Segments)
                 {
-                    foreach (var segment in itinerary.Segments)
+                    // Creăm obiectul Flight
+                    var flight = new Flight
                     {
-                        var flight = new Flight
-                        {
-                            Destination = segment.Arrival.IataCode,
-                            Departure = segment.Departure.At,
-                            Arrival = segment.Arrival.At,
-                            Duration = Utilities.Utilities.ParseDuration(segment.Duration),
-                            Price = Convert.ToInt32(flightOffer.Price.Total),
-                            //Number = segment.CarrierCode + segment.number idee,
-                        };
+                        Destination = segment.ArrivalAirport,
+                        Departure = segment.DepartureTime,
+                        Arrival = segment.ArrivalTime,
+                        Duration = Utilities.Utilities.ParseDuration(segment.Duration),
+                        Price = Convert.ToInt32(reservationResponse.Flight.Price.Total),
+                    };
 
-                        if (firstFlight == null)
-                        {
-                            firstFlight = flight;
-                        }
-
-                        if (previousFlight != null)
-                        {
-                            previousFlight.NextFlight = flight;
-                        }
-
-                        _context.Flights.Add(flight);
-                        await _context.SaveChangesAsync();
-
-                        previousFlight = flight;
+                    if (firstFlight == null)
+                    {
+                        firstFlight = flight;
                     }
+
+                    if (previousFlight != null)
+                    {
+                        previousFlight.NextFlight = flight;
+                    }
+
+                    _context.Flights.Add(flight);
+                    await _context.SaveChangesAsync();
+
+                    previousFlight = flight;
                 }
 
                 if (firstFlight != null)
                 {
                     var ticket = new Ticket
                     {
-                        TotalPrice = Convert.ToInt32(flightOffer.Price.Total),
+                        TotalPrice = Convert.ToInt32(reservationResponse.Flight.Price.Total),
                         Flights = firstFlight,
                         User = user,
                     };
@@ -85,7 +82,8 @@ namespace mainApp.Server.Controllers
             try
             {
                 await SaveTicketFromReservationResponse(reservationResponse, userId);
-                return Ok(new { Message = "Ticket reserved successfully." });
+
+                return Ok(new { Message = "Ticket reserved successfully."});
             }
             catch (Exception ex)
             {

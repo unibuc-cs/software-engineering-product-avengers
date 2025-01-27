@@ -21,37 +21,34 @@ public class AmadeusClient
     }
     public async Task AuthenticateAsync()
     {
-        //var credentials = new Dictionary<string, string>
-        //{   
-        //    { "grant_type", "client_credentials" },
-        //    { "client_id", _settings.ClientId },
-        //    { "client_secret", _settings.ClientSecret }
-        //};
+        var credentials = new Dictionary<string, string>
+        {
+            { "grant_type", "client_credentials" },
+            { "client_id", _settings.ClientId },
+            { "client_secret", _settings.ClientSecret }
+        };
 
-        //using var requestBody = new FormUrlEncodedContent(credentials);
-        //var response = await _httpClient.PostAsync("v1/security/oauth2/token", requestBody);
-        //var responseContent = await response.Content.ReadAsStringAsync();
-        //using var document = JsonDocument.Parse(responseContent);
+        using var requestBody = new FormUrlEncodedContent(credentials);
+        var response = await _httpClient.PostAsync("v1/security/oauth2/token", requestBody);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(responseContent);
 
-        //if (document.RootElement.TryGetProperty("access_token", out var accessTokenElement))
-        //{
-        //    var accessToken = accessTokenElement.GetString();
-        //    _accessToken = accessToken;
-        //}
-        _accessToken = "ctFq7GLdickk1LyRsJGr6QNdISCP";
+        if (document.RootElement.TryGetProperty("access_token", out var accessTokenElement))
+        {
+            var accessToken = accessTokenElement.GetString();
+            _accessToken = accessToken;
+        }
         Console.WriteLine(_accessToken);
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
     private async Task<string> PostFlightPricingAsync(string flightOffersJson)
     {
-        // Parsează răspunsul JSON pentru a extrage `data` (lista flight offers)
         var jsonDocument = JsonDocument.Parse(flightOffersJson);
         if (!jsonDocument.RootElement.TryGetProperty("data", out var flightOffersArray))
         {
             throw new InvalidOperationException("Invalid JSON: Missing 'data' property.");
         }
 
-        // Construim corpul cererii pentru `pricing`
         var pricingRequest = new
         {
             data = new
@@ -61,13 +58,10 @@ public class AmadeusClient
             }
         };
 
-        // Serializăm corpul cererii în JSON
         var pricingRequestJson = JsonSerializer.Serialize(pricingRequest);
 
-        // Endpoint-ul pentru pricing
         var pricingEndpoint = "v1/shopping/flight-offers/pricing";
 
-        // Creează cererea POST
         var request = new HttpRequestMessage(HttpMethod.Post, pricingEndpoint)
         {
             Content = new StringContent(pricingRequestJson, Encoding.UTF8, "application/json")
@@ -75,7 +69,6 @@ public class AmadeusClient
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
 
-        // Trimitem cererea
         var response = await _httpClient.SendAsync(request);
 
         if (!response.IsSuccessStatusCode)
@@ -84,7 +77,6 @@ public class AmadeusClient
             throw new HttpRequestException($"Failed to price flight offers. Status: {response.StatusCode}, Content: {content}");
         }
 
-        // Returnăm răspunsul ca string JSON
         return await response.Content.ReadAsStringAsync();
     }
 
@@ -111,10 +103,5 @@ public class AmadeusClient
         var pricingResult = await PostFlightPricingAsync(jsonString);
 
         return pricingResult;
-    }
-
-    private class AuthResponse
-    {
-        public string? AccessToken { get; set; }
     }
 }

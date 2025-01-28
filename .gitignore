@@ -1,9 +1,35 @@
-﻿# Ignoră directoarele generate de Visual Studio
-.vs/
+﻿# Fisiere și directoare de build
 bin/
 obj/
 
-# Ignoră alte fișiere temporare
+# Director generat de Visual Studio
+.vs/
+
+# Fișierele temporare și cache-uri
 *.user
 *.suo
-*.vsidx
+*.userosscache
+*.sln.docstates
+*.csproj.user
+*.dbmdl
+*.cache
+*.pdb
+*.ipch
+*.tlog
+*.log
+*.lastcodeanalysissucceeded
+
+# Fișiere generate pentru MSBuild
+*.cache/
+*.Build.*
+# Fișiere temporare și de configurare
+*.csproj.user
+*.csproj.dotSettings
+*.csproj.vspscc
+
+# Fișiere Roslyn (analizator de cod)
+*.editorconfig
+
+# Fișierele locale de configurare
+appsettings.Development.json
+appsettings.*.json

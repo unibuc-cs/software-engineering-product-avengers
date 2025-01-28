@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace ReactApp1.Server.Data
+namespace mainApp.Server.Services
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
@@ -15,5 +15,11 @@ namespace ReactApp1.Server.Data
         {
             base.OnModelCreating(builder);
         }
+        public DbSet<Flight> Flights { get; set; }
+
+        public DbSet<Housing> Hotels { get; set; }
+        public DbSet<Itinerary> Intineraries { get; set; }
+        public DbSet<Seat> Seats { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
     }
 }

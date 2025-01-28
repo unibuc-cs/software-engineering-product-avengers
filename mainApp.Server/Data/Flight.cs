@@ -2,7 +2,7 @@
 
 namespace mainApp.Server.Data
 {
-    public class Flights
+    public class Flight
     {
         [Key]
         public int Id { get; set; }
@@ -11,10 +11,9 @@ namespace mainApp.Server.Data
         public int Duration { get; set; }
         public DateTime Arrival { get; set; }
         public DateTime Departure { get; set; }
-        public int Price { get; set; }
 
-        public Flights? NextFlight { get; set; }
-        public virtual ICollection<Tickets>? Tickets { get; set; }
+        public Flight? NextFlight { get; set; }
+        public virtual ICollection<Ticket>? Tickets { get; set; }
 
     }
 }

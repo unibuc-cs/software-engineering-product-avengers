@@ -2,15 +2,15 @@
 
 namespace mainApp.Server.Data
 {
-    public class Seats
+    public class Seat
     {
         [Key]
         public int Id { get; set; }
         public string FullName { get; set; }
-        public string Seat {  get; set; }
+        public string SeatNumber {  get; set; }
         public bool BagajMana { get; set; }
         public bool BagajCala { get; set; }
-        public Tickets Ticket { get; set; }
+        public Ticket Ticket { get; set; }
 
     }
 }

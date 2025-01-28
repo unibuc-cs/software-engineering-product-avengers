@@ -37,17 +37,6 @@ builder.Services.AddHttpClient<AmadeusClient>(client =>
     client.BaseAddress = new Uri("https://test.api.amadeus.com/");
 });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowReactApp",
-        builder =>
-        {
-            builder.WithOrigins("http://localhost:3000")
-                   .AllowAnyHeader()
-                   .AllowAnyMethod();
-        });
-});
-
 var app = builder.Build();
 
 app.UseDefaultFiles();
@@ -63,8 +52,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors("AllowReactApp");
 
 app.UseAuthorization();
 

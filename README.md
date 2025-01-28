@@ -118,7 +118,7 @@ The Component Diagram breaks down the Travel Monster application into its key co
 ### Relationships
 - The user interacts with the API Gateway to make API requests.
 - The API Gateway communicates with various services to handle user requests.
-- Each service has its own controller and repository for managing data and operations.
+- Each service has its own controller and repository for managing data and operations .
 
 
 # Requirements

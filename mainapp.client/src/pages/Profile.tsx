@@ -1,20 +1,53 @@
 import React from 'react';
-import { useAppSelector, useAppDispatch } from '../hooks/redux';
+import { useAppSelector, useAppDispatch } from '../hooks/redux'; // Ensure correct path
 import { logout } from '../store/slices/userSlice';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom'; // Updated import
 
 const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate(); // Use useNavigate instead of useHistory
   const { currentUser, bookmarks, travelHistory } = useAppSelector(state => state.user);
 
+  // Redirect to the Login page
+  const handleLoginRedirect = () => {
+    navigate('/login');
+  };
+
+  // Redirect to the Sign Up page
+  const handleSignUpRedirect = () => {
+    navigate('/signup');
+  };
+
+
+  // If user is not authenticated
   if (!currentUser) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Please log in to view your profile</h1>
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <h1 className="text-4xl font-bold mb-8 text-center">Please log in to view your profile</h1>
+          <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <button 
+              onClick={handleSignUpRedirect} 
+              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-md"
+            >
+              Sign Up
+            </button>
+            <button 
+              onClick={handleLoginRedirect} 
+              className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105 shadow-md"
+            >
+              Log In
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // ... existing code ...
+
+  // If user is authenticated
   return (
     <motion.div 
       className="max-w-7xl mx-auto px-4 py-8"
@@ -80,4 +113,4 @@ const Profile: React.FC = () => {
   );
 };
 
-export default Profile; 
+export default Profile;

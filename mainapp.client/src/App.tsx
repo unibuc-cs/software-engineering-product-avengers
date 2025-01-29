@@ -6,6 +6,8 @@ import Accommodations from './pages/Accommodations';
 import Map from './pages/Map';
 import Itinerary from './pages/Itinerary';
 import Profile from './pages/Profile';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
             <Route path="/map" element={<Map />} />
             <Route path="/itinerary" element={<Itinerary />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
           </Routes>
         </main>
       </div>

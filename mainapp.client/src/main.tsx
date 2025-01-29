@@ -2,9 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './App.css';
+import { Provider } from 'react-redux'; // Step 1: Import Provider
+import { store } from './store/store'; // Step 2: Import your Redux store
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <Provider store={store}> {/* Step 3: Wrap App with Provider */}
+      <App />
+    </Provider>
   </React.StrictMode>
 );

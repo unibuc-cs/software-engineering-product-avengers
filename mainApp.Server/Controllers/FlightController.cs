@@ -68,7 +68,7 @@ public class FlightsController : ControllerBase
             var flightOffersJson = await _amadeusClient.GetFlightOffersAsync(origin, destination, departureDate, returnDate, numberofAdults);
 
             var simplifiedResponse = SimplifyPricingResponse(flightOffersJson);
-
+            Console.WriteLine(simplifiedResponse);
             return Ok(simplifiedResponse);
         }
         catch (Exception ex)

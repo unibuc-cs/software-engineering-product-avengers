@@ -5,6 +5,8 @@ import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa';
 interface Location {
   id: string;
   name: string;
+  address: string;
+  photoUrl: string;
   position: { lat: number; lng: number };
   type: string;
 }
@@ -18,13 +20,13 @@ const Map: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [placesService, setPlacesService] = useState<google.maps.places.PlacesService | null>(null);
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]); // Track markers
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]); 
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Load Google Maps Script only once
   useEffect(() => {
     const loadGoogleMaps = () => {
       if (window.google) {
-        // If Google Maps is already loaded, return early
         setIsLoading(false);
         return;
       }
@@ -40,77 +42,107 @@ const Map: React.FC = () => {
     loadGoogleMaps();
   }, []);
 
-  // Initialize Map and Places Service
   useEffect(() => {
     if (isLoading || !window.google || !mapRef.current || map) return;
 
     try {
       const newMap = new window.google.maps.Map(mapRef.current, {
-        center: { lat: 48.8566, lng: 2.3522 }, // Default to Paris
+        center: { lat: 48.8566, lng: 2.3522 }, 
         zoom: 13,
-        mapTypeControl: true,
-        streetViewControl: true,
-        fullscreenControl: true,
-        zoomControl: true,
       });
 
       setMap(newMap);
-
-      // Initialize PlacesService for location search
-      const service = new window.google.maps.places.PlacesService(newMap);
-      setPlacesService(service);
+      setPlacesService(new window.google.maps.places.PlacesService(newMap));
     } catch (err) {
       setError('Error initializing map');
       console.error(err);
     }
   }, [isLoading, map]);
 
-  // Handle Search
+  const searchNearbyPlaces = (latLng: google.maps.LatLng) => {
+    if (!placesService) return;
+
+    setLocations([]); // Clear previous locations
+    let completedSearches = 0;
+    const placeTypes = ['tourist_attraction', 'museum', 'church', 'park', 'zoo', 'national_park', 'aquarium', 'art_gallery', 'library', 'movie_theater'];
+    
+    placeTypes.forEach((type, index) => {
+      setTimeout(() => {
+        const placesRequest = {
+          location: latLng,
+          radius: 5000,
+          type: type,
+        };
+
+        placesService.nearbySearch(placesRequest, (places, status) => {
+          completedSearches++;
+          
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && places) {
+            const locationsData: Location[] = places.map(place => ({
+              id: place.place_id || `fallback-${place.name || 'unknown'}`,
+              name: place.name || 'Unknown',
+              address: place.vicinity || 'N/A',
+              position: {
+                lat: place.geometry?.location?.lat?.() ?? 0,
+                lng: place.geometry?.location?.lng?.() ?? 0,
+              },
+              photoUrl: place.photos ? place.photos[0].getUrl({ maxWidth: 200, maxHeight: 200 }) : '',
+              type: place.types?.join(', ') || 'Unknown',
+            }));
+
+            setLocations(prev => [...prev, ...locationsData]);
+          }
+
+          if (completedSearches === placeTypes.length) {
+            setIsSearching(false);
+          }
+        });
+      }, index * 500);
+    });
+  };
+
   const handleSearch = () => {
     if (!searchQuery || !placesService || !map) return;
-
-    // Use the PlacesService to search for the place
+    
+    setIsSearching(true);
     const request = {
       query: searchQuery,
-      fields: ['name', 'geometry'],
+      fields: ['name', 'geometry', 'formatted_address', 'photos'],
     };
-
+  
     placesService.textSearch(request, (results, status) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
-        // Remove existing markers from the map
+        // Clear existing markers
         markers.forEach(marker => marker.setMap(null));
-        setMarkers([]); // Clear the markers state
-
-        // Get the first result (most relevant)
+        setMarkers([]);
+  
         const place = results[0];
-        const { geometry, name } = place;
-
+        const { geometry } = place;
+  
         if (geometry && geometry.location) {
           const latLng = geometry.location;
-
-          // Center the map on the searched place
           map.setCenter(latLng);
           map.setZoom(14);
-
-          // Add a marker for the searched location
+  
           const marker = new window.google.maps.Marker({
             position: latLng,
             map,
-            title: name,
+            title: place.name,
           });
-
-          // Add the marker to the markers state
-          setMarkers(prevMarkers => [...prevMarkers, marker]);
+  
+          setMarkers([marker]);
+          searchNearbyPlaces(latLng);
         }
       } else {
+        setIsSearching(false);
         alert('Location not found!');
       }
     });
   };
 
-  // Handle Current Location button click
   const handleCurrentLocation = () => {
     if (navigator.geolocation) {
+      setIsSearching(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
@@ -119,25 +151,45 @@ const Map: React.FC = () => {
           map?.setCenter(latLng);
           map?.setZoom(14);
 
-          // Remove existing markers
           markers.forEach(marker => marker.setMap(null));
-          setMarkers([]); // Clear markers state
+          setMarkers([]);
 
-          // Add a marker for the user's current location
           const marker = new window.google.maps.Marker({
             position: latLng,
             map,
             title: 'Your Current Location',
           });
 
-          // Add the marker to the markers state
-          setMarkers(prevMarkers => [...prevMarkers, marker]);
+          setMarkers([marker]);
+          searchNearbyPlaces(latLng);
         },
-        () => alert('Error getting your location.')
+        () => {
+          setIsSearching(false);
+          alert('Error getting your location.');
+        }
       );
     } else {
       alert('Geolocation is not supported by this browser.');
     }
+  };
+
+  const handleLocationClick = (location: Location) => {
+    if (!map) return;
+
+    markers.forEach(marker => marker.setMap(null));
+    setMarkers([]);
+
+    const latLng = new window.google.maps.LatLng(location.position.lat, location.position.lng);
+    map.setCenter(latLng);
+    map.setZoom(15);
+
+    const marker = new window.google.maps.Marker({
+      position: latLng,
+      map,
+      title: location.name,
+    });
+
+    setMarkers([marker]);
   };
 
   if (error) {
@@ -165,21 +217,21 @@ const Map: React.FC = () => {
             <input
               type="text"
               placeholder="Search locations..."
-              className="w-full p-3 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 pr-10 rounded-lg border"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             />
-            <FaSearch
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
-              onClick={handleSearch}
+            <FaSearch 
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" 
+              onClick={handleSearch} 
             />
           </div>
-          <button
-            onClick={handleCurrentLocation}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          <button 
+            onClick={handleCurrentLocation} 
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
           >
-            <FaMapMarkerAlt />
-            Current Location
+            <FaMapMarkerAlt /> Current Location
           </button>
         </div>
       </div>
@@ -193,6 +245,32 @@ const Map: React.FC = () => {
           <div ref={mapRef} style={{ height: '70vh', width: '100%' }} />
         )}
       </div>
+
+      {isSearching ? (
+        <div className="mt-8 flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : locations.length > 0 && (
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {locations.map((location) => (
+            <div 
+              key={location.id} 
+              className="bg-white p-4 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow" 
+              onClick={() => handleLocationClick(location)}
+            >
+              {location.photoUrl && (
+                <img 
+                  src={location.photoUrl} 
+                  alt={location.name} 
+                  className="w-full h-40 object-cover rounded-lg mb-4" 
+                />
+              )}
+              <h3 className="text-xl font-semibold">{location.name}</h3>
+              <p className="text-gray-600">{location.address}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };

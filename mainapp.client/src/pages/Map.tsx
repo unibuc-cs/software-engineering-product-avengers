@@ -17,46 +17,36 @@ const Map: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [locations] = useState<Location[]>([
-    {
-      id: '1',
-      name: 'Eiffel Tower',
-      position: { lat: 48.8584, lng: 2.2945 },
-      type: 'attraction'
-    },
-    {
-      id: '2',
-      name: 'Louvre Museum',
-      position: { lat: 48.8606, lng: 2.3376 },
-      type: 'museum'
-    }
-  ]);
+  const [placesService, setPlacesService] = useState<google.maps.places.PlacesService | null>(null);
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]); // Track markers
 
-  // Load Google Maps Script
+  // Load Google Maps Script only once
   useEffect(() => {
     const loadGoogleMaps = () => {
-      if (!window.google) {
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
-        script.async = true;
-        script.onload = () => setIsLoading(false);
-        script.onerror = () => setError('Failed to load Google Maps');
-        document.head.appendChild(script);
-      } else {
+      if (window.google) {
+        // If Google Maps is already loaded, return early
         setIsLoading(false);
+        return;
       }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.onload = () => setIsLoading(false);
+      script.onerror = () => setError('Failed to load Google Maps');
+      document.head.appendChild(script);
     };
 
     loadGoogleMaps();
   }, []);
 
-  // Initialize Map
+  // Initialize Map and Places Service
   useEffect(() => {
     if (isLoading || !window.google || !mapRef.current || map) return;
 
     try {
       const newMap = new window.google.maps.Map(mapRef.current, {
-        center: { lat: 48.8566, lng: 2.3522 },
+        center: { lat: 48.8566, lng: 2.3522 }, // Default to Paris
         zoom: 13,
         mapTypeControl: true,
         streetViewControl: true,
@@ -65,38 +55,90 @@ const Map: React.FC = () => {
       });
 
       setMap(newMap);
+
+      // Initialize PlacesService for location search
+      const service = new window.google.maps.places.PlacesService(newMap);
+      setPlacesService(service);
     } catch (err) {
       setError('Error initializing map');
       console.error(err);
     }
   }, [isLoading, map]);
 
-  // Add Markers
-  useEffect(() => {
-    if (!map) return;
+  // Handle Search
+  const handleSearch = () => {
+    if (!searchQuery || !placesService || !map) return;
 
-    locations.forEach(location => {
-      const marker = new window.google.maps.Marker({
-        position: location.position,
-        map,
-        title: location.name,
-      });
+    // Use the PlacesService to search for the place
+    const request = {
+      query: searchQuery,
+      fields: ['name', 'geometry'],
+    };
 
-      const infoWindow = new window.google.maps.InfoWindow({
-        content: `
-          <div class="p-2">
-            <h3 class="font-bold">${location.name}</h3>
-            <p class="text-sm text-gray-600">${location.type}</p>
-            <button class="mt-2 text-blue-600 hover:text-blue-800">Add to Itinerary</button>
-          </div>
-        `
-      });
+    placesService.textSearch(request, (results, status) => {
+      if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+        // Remove existing markers from the map
+        markers.forEach(marker => marker.setMap(null));
+        setMarkers([]); // Clear the markers state
 
-      marker.addListener('click', () => {
-        infoWindow.open(map, marker);
-      });
+        // Get the first result (most relevant)
+        const place = results[0];
+        const { geometry, name } = place;
+
+        if (geometry && geometry.location) {
+          const latLng = geometry.location;
+
+          // Center the map on the searched place
+          map.setCenter(latLng);
+          map.setZoom(14);
+
+          // Add a marker for the searched location
+          const marker = new window.google.maps.Marker({
+            position: latLng,
+            map,
+            title: name,
+          });
+
+          // Add the marker to the markers state
+          setMarkers(prevMarkers => [...prevMarkers, marker]);
+        }
+      } else {
+        alert('Location not found!');
+      }
     });
-  }, [map, locations]);
+  };
+
+  // Handle Current Location button click
+  const handleCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const latLng = new window.google.maps.LatLng(latitude, longitude);
+
+          map?.setCenter(latLng);
+          map?.setZoom(14);
+
+          // Remove existing markers
+          markers.forEach(marker => marker.setMap(null));
+          setMarkers([]); // Clear markers state
+
+          // Add a marker for the user's current location
+          const marker = new window.google.maps.Marker({
+            position: latLng,
+            map,
+            title: 'Your Current Location',
+          });
+
+          // Add the marker to the markers state
+          setMarkers(prevMarkers => [...prevMarkers, marker]);
+        },
+        () => alert('Error getting your location.')
+      );
+    } else {
+      alert('Geolocation is not supported by this browser.');
+    }
+  };
 
   if (error) {
     return (
@@ -127,9 +169,15 @@ const Map: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <FaSearch
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+              onClick={handleSearch}
+            />
           </div>
-          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+          <button
+            onClick={handleCurrentLocation}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
             <FaMapMarkerAlt />
             Current Location
           </button>
@@ -144,18 +192,6 @@ const Map: React.FC = () => {
         ) : (
           <div ref={mapRef} style={{ height: '70vh', width: '100%' }} />
         )}
-      </div>
-
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-        {locations.map(location => (
-          <div key={location.id} className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-            <h3 className="font-bold">{location.name}</h3>
-            <p className="text-sm text-gray-600 capitalize">{location.type}</p>
-            <button className="mt-2 text-blue-600 hover:text-blue-800">
-              Add to Itinerary
-            </button>
-          </div>
-        ))}
       </div>
     </motion.div>
   );

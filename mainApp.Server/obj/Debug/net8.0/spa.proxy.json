@@ -3,7 +3,7 @@
 "ServerUrl": "https://localhost:5173",
 "RedirectUrl": "",
 "LaunchCommand": "npm run dev",
-"WorkingDirectory": "C:\\Users\\rares\\Desktop\\Developer\\software-engineering-product-avengers\\mainApp.Server\\..\\mainapp.client",
+"WorkingDirectory": "C:\\Users\\elena\\Documents\\GitHub\\software-engineering-product-avengers\\mainapp.server\\..\\mainapp.client",
 "MaxTimeoutInSeconds": "120",
 "KeepRunning": "false"
 }

@@ -1,277 +1,265 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa';
 
-interface Location {
-  id: string;
-  name: string;
-  address: string;
-  photoUrl: string;
-  position: { lat: number; lng: number };
-  type: string;
+declare global {
+  interface Window {
+    initMap?: () => void;
+    google?: typeof google;
+  }
 }
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyDpmvq2oubtD-ycAz6OHlotF8IcAeO6JCo';
+interface MarkerLibrary {
+  AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement;
+}
+
+const GOOGLE_MAPS_API_KEY = 'AIzaSyA81yc5Jf_TmZNIfBR2yNIjb9dJqV3umvk';
 
 const Map: React.FC = () => {
-  const mapRef = React.useRef<HTMLDivElement>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [placesService, setPlacesService] = useState<google.maps.places.PlacesService | null>(null);
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]); 
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [center] = useState({ lat: 40.7128, lng: -74.0060 });
+  const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const [attractions, setAttractions] = useState<google.maps.places.PlaceResult[]>([]);
 
   useEffect(() => {
-    const loadGoogleMaps = () => {
-      if (window.google) {
-        setIsLoading(false);
-        return;
-      }
+    const loadGoogleMaps = async () => {
+      try {
+        // Remove any existing script
+        const existingScript = document.getElementById('google-maps-script');
+        if (existingScript) {
+          document.head.removeChild(existingScript);
+        }
 
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
-      script.async = true;
-      script.onload = () => setIsLoading(false);
-      script.onerror = () => setError('Failed to load Google Maps');
-      document.head.appendChild(script);
+        // Load the Maps JavaScript API
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.id = 'google-maps-script';
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
+          script.async = true;
+          
+          window.initMap = () => {
+            if (mapRef.current) {
+              const newMap = new google.maps.Map(mapRef.current, {
+                center,
+                zoom: 12,
+                mapId: 'REPLACE_WITH_YOUR_MAP_ID'
+              });
+              setMap(newMap);
+            }
+            resolve();
+          };
+
+          script.onerror = () => reject(new Error('Failed to load Google Maps script'));
+          document.head.appendChild(script);
+        });
+
+      } catch (error) {
+        console.error('Error loading Google Maps:', error);
+      }
     };
 
     loadGoogleMaps();
-  }, []);
 
-  useEffect(() => {
-    if (isLoading || !window.google || !mapRef.current || map) return;
-
-    try {
-      const newMap = new window.google.maps.Map(mapRef.current, {
-        center: { lat: 48.8566, lng: 2.3522 }, 
-        zoom: 13,
-      });
-
-      setMap(newMap);
-      setPlacesService(new window.google.maps.places.PlacesService(newMap));
-    } catch (err) {
-      setError('Error initializing map');
-      console.error(err);
-    }
-  }, [isLoading, map]);
-
-  const searchNearbyPlaces = (latLng: google.maps.LatLng) => {
-    if (!placesService) return;
-
-    setLocations([]); // Clear previous locations
-    let completedSearches = 0;
-    const placeTypes = ['tourist_attraction', 'museum', 'church', 'park', 'zoo', 'national_park', 'aquarium', 'art_gallery', 'library', 'movie_theater'];
-    
-    placeTypes.forEach((type, index) => {
-      setTimeout(() => {
-        const placesRequest = {
-          location: latLng,
-          radius: 5000,
-          type: type,
-        };
-
-        placesService.nearbySearch(placesRequest, (places, status) => {
-          completedSearches++;
-          
-          if (status === window.google.maps.places.PlacesServiceStatus.OK && places) {
-            const locationsData: Location[] = places.map(place => ({
-              id: place.place_id || `fallback-${place.name || 'unknown'}`,
-              name: place.name || 'Unknown',
-              address: place.vicinity || 'N/A',
-              position: {
-                lat: place.geometry?.location?.lat?.() ?? 0,
-                lng: place.geometry?.location?.lng?.() ?? 0,
-              },
-              photoUrl: place.photos ? place.photos[0].getUrl({ maxWidth: 200, maxHeight: 200 }) : '',
-              type: place.types?.join(', ') || 'Unknown',
-            }));
-
-            setLocations(prev => [...prev, ...locationsData]);
-          }
-
-          if (completedSearches === placeTypes.length) {
-            setIsSearching(false);
-          }
-        });
-      }, index * 500);
-    });
-  };
+    return () => {
+      if (marker) {
+        (marker as any).setMap(null);
+      }
+      setMap(null);
+      setMarker(null);
+      delete window.initMap;
+    };
+  }, [center]);
 
   const handleSearch = () => {
-    if (!searchQuery || !placesService || !map) return;
+    if (!map) return;
     
-    setIsSearching(true);
-    const request = {
-      query: searchQuery,
-      fields: ['name', 'geometry', 'formatted_address', 'photos'],
-    };
-  
-    placesService.textSearch(request, (results, status) => {
-      if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
-        // Clear existing markers
-        markers.forEach(marker => marker.setMap(null));
-        setMarkers([]);
-  
-        const place = results[0];
-        const { geometry } = place;
-  
-        if (geometry && geometry.location) {
-          const latLng = geometry.location;
-          map.setCenter(latLng);
-          map.setZoom(14);
-  
-          const marker = new window.google.maps.Marker({
-            position: latLng,
-            map,
-            title: place.name,
-          });
-  
-          setMarkers([marker]);
-          searchNearbyPlaces(latLng);
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: searchQuery }, async (results, status) => {
+      if (status === 'OK' && results && results[0]) {
+        const location = results[0].geometry.location;
+        const newCenter = { lat: location.lat(), lng: location.lng() };
+        map.panTo(newCenter);
+
+        // Remove existing marker if any
+        if (marker) {
+          (marker as any).setMap(null);
         }
-      } else {
-        setIsSearching(false);
-        alert('Location not found!');
+
+        // Create new AdvancedMarkerElement
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+        const newMarker = new AdvancedMarkerElement({
+          map,
+          position: newCenter,
+          title: searchQuery
+        });
+        setMarker(newMarker);
+
+        // Search for nearby attractions
+        const service = new google.maps.places.PlacesService(map);
+        const request = {
+          location: newCenter,
+          radius: 10000,
+          type: 'tourist_attraction'
+        } as google.maps.places.PlaceSearchRequest;
+
+        service.nearbySearch(request, (places, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && places) {
+            const maxPlaces = Math.min(Math.max(places.length, 20), 30);
+            setAttractions(places.slice(0, maxPlaces));
+          }
+        });
       }
     });
   };
 
-  const handleCurrentLocation = () => {
-    if (navigator.geolocation) {
-      setIsSearching(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const latLng = new window.google.maps.LatLng(latitude, longitude);
+  const getCurrentLocation = () => {
+    if (!map || !navigator.geolocation) return;
 
-          map?.setCenter(latLng);
-          map?.setZoom(14);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const newCenter = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        map.panTo(newCenter);
 
-          markers.forEach(marker => marker.setMap(null));
-          setMarkers([]);
-
-          const marker = new window.google.maps.Marker({
-            position: latLng,
-            map,
-            title: 'Your Current Location',
-          });
-
-          setMarkers([marker]);
-          searchNearbyPlaces(latLng);
-        },
-        () => {
-          setIsSearching(false);
-          alert('Error getting your location.');
+        // Remove existing marker if any
+        if (marker) {
+          (marker as any).setMap(null);
         }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
+
+        // Create new AdvancedMarkerElement
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+        const newMarker = new AdvancedMarkerElement({
+          map,
+          position: newCenter,
+          title: searchQuery
+        });
+        setMarker(newMarker);
+      },
+      (error) => {
+        console.error('Error getting current location:', error);
+      }
+    );
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
-  const handleLocationClick = (location: Location) => {
-    if (!map) return;
+  // Add a function to handle card clicks
+  const handleAttractionClick = async (place: google.maps.places.PlaceResult) => {
+    if (!map || !place.geometry?.location) return;
 
-    markers.forEach(marker => marker.setMap(null));
-    setMarkers([]);
+    // Pan map to the attraction location
+    map.panTo(place.geometry.location);
+    map.setZoom(15); // Zoom in closer
 
-    const latLng = new window.google.maps.LatLng(location.position.lat, location.position.lng);
-    map.setCenter(latLng);
-    map.setZoom(15);
+    // Remove existing marker
+    if (marker) {
+      (marker as any).setMap(null);
+    }
 
-    const marker = new window.google.maps.Marker({
-      position: latLng,
+    // Create new marker for the attraction
+    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+    const newMarker = new AdvancedMarkerElement({
       map,
-      title: location.name,
+      position: place.geometry.location,
+      title: place.name
     });
-
-    setMarkers([marker]);
+    setMarker(newMarker);
   };
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-2">Error</h2>
-          <p className="text-gray-600">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <motion.div
-      className="max-w-7xl mx-auto px-4 py-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Explore Destinations</h1>
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              placeholder="Search locations..."
-              className="w-full p-3 pr-10 rounded-lg border"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            />
-            <FaSearch 
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" 
-              onClick={handleSearch} 
-            />
-          </div>
-          <button 
-            onClick={handleCurrentLocation} 
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
-          >
-            <FaMapMarkerAlt /> Current Location
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-[70vh]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        ) : (
-          <div ref={mapRef} style={{ height: '70vh', width: '100%' }} />
-        )}
-      </div>
-
-      {isSearching ? (
-        <div className="mt-8 flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      ) : locations.length > 0 && (
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {locations.map((location) => (
-            <div 
-              key={location.id} 
-              className="bg-white p-4 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow" 
-              onClick={() => handleLocationClick(location)}
-            >
-              {location.photoUrl && (
-                <img 
-                  src={location.photoUrl} 
-                  alt={location.name} 
-                  className="w-full h-40 object-cover rounded-lg mb-4" 
-                />
-              )}
-              <h3 className="text-xl font-semibold">{location.name}</h3>
-              <p className="text-gray-600">{location.address}</p>
+    <div className="min-h-screen w-full flex flex-col">
+      {/* Header and Controls Section */}
+      <div className="bg-white p-4 shadow-md mb-4">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-xl font-bold text-gray-800 mb-3">
+            Find Your Perfect Vacation Spot
+          </h1>
+          
+          <div className="flex gap-2">
+            <div className="flex-1 flex items-center bg-white rounded-lg border border-gray-300">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Enter a location..."
+                className="w-full p-2 rounded-l-lg outline-none"
+              />
+              <button
+                onClick={handleSearch}
+                className="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition-colors"
+              >
+                <FaSearch />
+              </button>
             </div>
-          ))}
+            <button
+              onClick={getCurrentLocation}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+            >
+              <FaMapMarkerAlt />
+              <span className="hidden sm:inline">Current Location</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Map Container */}
+      <div className="flex-1 px-4 mb-4">
+        <div ref={mapRef} className="w-full h-[400px] rounded-lg shadow-md" />
+      </div>
+
+      {/* Attractions Section */}
+      {attractions.length > 0 && (
+        <div className="px-4 pb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            Popular Attractions Nearby
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-7xl mx-auto">
+            {attractions.map((place, index) => (
+              <div 
+                key={place.place_id || index}
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => handleAttractionClick(place)}
+              >
+                {place.photos?.[0] && (
+                  <img
+                    src={place.photos[0].getUrl()}
+                    alt={place.name}
+                    className="w-full h-48 object-cover"
+                  />
+                )}
+                <div className="p-4">
+                  <h3 className="font-bold text-lg mb-2">{place.name}</h3>
+                  <div className="flex items-center mb-2">
+                    <div className="flex text-yellow-400">
+                      {[...Array(5)].map((_, i) => (
+                        <FaSearch
+                          key={i}
+                          className={i < (place.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}
+                        />
+                      ))}
+                    </div>
+                    <span className="ml-2 text-gray-600">
+                      {place.rating} ({place.user_ratings_total} reviews)
+                    </span>
+                  </div>
+                  {place.vicinity && (
+                    <p className="text-gray-600">{place.vicinity}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 };
 

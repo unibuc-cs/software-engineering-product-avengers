@@ -28,8 +28,8 @@ const Accommodations: React.FC = () => {
 
   const handleSearch = async () => {
     try {
-      const response = await fetch('/api/accommodations/search', {
-        method: 'POST',
+        const response = await fetch('/api/Accommodations/showHotels', {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },

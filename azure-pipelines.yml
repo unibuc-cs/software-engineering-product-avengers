@@ -1,0 +1,49 @@
+trigger:
+- master
+
+resources:
+- repo: self
+
+variables:
+  dockerRegistryServiceConnection: 'd6013f69-bd5e-44a8-a015-2e1143b060c3' # Your ACR service connection ID/Name
+  containerRegistry: 'travelmonster.azurecr.io'                          # Your ACR login server
+  imageRepository: 'travelmonster'                                       # The repository name in ACR
+  dockerfilePath: '$(Build.SourcesDirectory)/mainApp.Server/Dockerfile'  # Dockerfile in mainApp.Server folder
+  vmImageName: 'ubuntu-latest'
+  tag: '$(Build.BuildId)'                                               # or 'latest', or any other tag
+
+stages:
+- stage: Build
+  displayName: Build and push Docker image
+  jobs:
+    - job: Build
+      displayName: 'Build and push'
+      pool:
+        vmImage: $(vmImageName)
+      steps:
+        - task: Docker@2
+          displayName: 'Build and push image to ACR'
+          inputs:
+            containerRegistry: $(dockerRegistryServiceConnection)
+            command: buildAndPush
+            repository: $(imageRepository)
+            dockerfile: $(dockerfilePath)
+            buildContext: '$(Build.SourcesDirectory)'  # same as the '.' in your local command
+            tags: |
+              $(tag)
+
+- stage: Deploy
+  displayName: Deploy to Azure Web App
+  jobs:
+    - job: Deploy
+      displayName: 'Deploy'
+      pool:
+        vmImage: $(vmImageName)
+      steps:
+        - task: AzureWebAppContainer@1
+          displayName: 'Deploy container to Azure Web App'
+          inputs:
+            azureSubscription: 'Azure for Students(cba66e21-7498-413d-96f2-5672e84f2951)' # your Azure subscription service connection
+            appName: 'travelmonster'  # your Web App name
+            # IMPORTANT: use the full ACR path <ACR>.azurecr.io/<repository>:<tag>
+            containers: '$(containerRegistry)/$(imageRepository):$(tag)'

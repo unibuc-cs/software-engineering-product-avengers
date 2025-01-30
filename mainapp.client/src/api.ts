@@ -1,5 +1,5 @@
 // src/api.js (or src/utils/api.js or src/services/api.js)
-const API_URL = 'http://localhost:5190/api/IdentityUser'; // Update with your backend URL
+const API_URL = 'https://localhost:8080/api/IdentityUser'; // Update with your backend URL
 
 interface UserData {
   email: string;

@@ -34,12 +34,15 @@ namespace mainApp.Server.Controllers
         private readonly GooglePlacesService _placeService;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly EmailService _emailService;
 
-        public AccommodationsController(GooglePlacesService googlePlacesService,ApplicationDbContext applicationDbContext, UserManager<ApplicationUser> userManager)
+        public AccommodationsController(EmailService emailService,GooglePlacesService googlePlacesService,
+            ApplicationDbContext applicationDbContext, UserManager<ApplicationUser> userManager)
         {
             _placeService = googlePlacesService;
             _context = applicationDbContext;
             _userManager = userManager;
+            _emailService = emailService;
         }
 
         private async Task SaveHotelReservationResponse(Accommodation reservationResponse, userCheck userCheck)
@@ -93,7 +96,11 @@ namespace mainApp.Server.Controllers
                 userHousing.UserId = user.Id;
                 _context.UserHousings.Add(userHousing);
                 await _context.SaveChangesAsync();
-
+                string message = $"Hey, multumim pentru increderea acordata {user.firstName} " +
+                    $"{user.lastName} rezervarea ta la {housing.Name},{housing.Address} a fost plasata! " +
+                    $"\n CheckIn: {userHousing.CheckIn}\n CheckOut: {userHousing.CheckOut}" +
+                    $"\n O zi faina in continuare, Echipa TravelMonster!";
+                await _emailService.SendEmailAsync(user.Email, "Rezervare Confirmata", message);
             }
             catch (Exception ex)
             {

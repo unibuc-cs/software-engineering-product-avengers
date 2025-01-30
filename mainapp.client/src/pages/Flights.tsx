@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+//URL CLOUDhttps://travelmonster-hfbzhpg0dxf9dwan.germanywestcentral-01.azurewebsites.net/
 interface Flight {
   id: string;
   itineraries: {
@@ -36,7 +36,7 @@ const Flights = () => {
 
     try {
       const query = new URLSearchParams(searchParams).toString();
-      const response = await fetch(`http://localhost:5190/api/flights/offers?${query}`);
+      const response = await fetch(`https://travelmonster-hfbzhpg0dxf9dwan.germanywestcentral-01.azurewebsites.net/api/flights/offers?${query}`);
       console.log(response);
       if (!response.ok) {
         throw new Error("Failed to fetch flights");

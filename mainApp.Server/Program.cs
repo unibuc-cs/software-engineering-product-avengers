@@ -53,10 +53,24 @@ builder.Services.AddCors(options =>
         {
             builder.WithOrigins($"http://localhost:{i}");
         }
+        builder.WithOrigins($"http://localhost:8080");
         builder.AllowAnyMethod()
                .AllowAnyHeader()
                .AllowCredentials();  // Allows credentials (cookies, HTTP authentication)
     });
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "AllowSpecificOrigins",
+        policy =>
+        {
+            // Replace with the domain(s) of your front-end
+            policy.WithOrigins("https://travelmonster-hfbzhpg0dxf9dwan.germanywestcentral-01.azurewebsites.net")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        });
 });
 
 
@@ -70,11 +84,12 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 // Swagger for dev environment (Swagger UI & docs)
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+//if (app.Environment.IsDevelopment())
+//{
+
+//}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection(); // Enforce HTTPS for secure communication
 

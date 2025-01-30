@@ -1,7 +1,8 @@
 ﻿# Fisiere și directoare de build
 bin/
+mainApp.server/bin/
 obj/
-
+mainApp.server/obj/
 # Director generat de Visual Studio
 .vs/
 

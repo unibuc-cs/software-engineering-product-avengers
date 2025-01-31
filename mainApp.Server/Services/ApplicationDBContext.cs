@@ -16,7 +16,7 @@ namespace mainApp.Server.Services
             base.OnModelCreating(builder);
         }
         public DbSet<Flight> Flights { get; set; }
-
+        public DbSet<UserHousing> UserHousings { get; set; }
         public DbSet<Housing> Hotels { get; set; }
         public DbSet<Itinerary> Intineraries { get; set; }
         public DbSet<Seat> Seats { get; set; }

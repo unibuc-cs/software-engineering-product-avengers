@@ -28,6 +28,8 @@ builder.Services.AddSwaggerGen();
 // Add singleton EmailService
 builder.Services.AddSingleton<EmailService>();
 
+
+
 // Configure Identity Options
 builder.Services.Configure<IdentityOptions>(options =>
 {
@@ -41,7 +43,11 @@ builder.Services.Configure<AmadeusSettings>(builder.Configuration.GetSection("Am
 builder.Services.AddHttpClient<AmadeusClient>(client =>
 {
     client.BaseAddress = new Uri("https://test.api.amadeus.com/");
+   
 });
+
+builder.Services.AddHttpClient<GooglePlacesService>();
+
 
 // Configure CORS policy
 builder.Services.AddCors(options =>

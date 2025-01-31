@@ -33,6 +33,8 @@ const Itinerary: React.FC = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const navigate = useNavigate();
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -149,6 +151,61 @@ const Itinerary: React.FC = () => {
   const timeSlots = Array.from({ length: 24 }, (_, i) => 
     `${i.toString().padStart(2, '0')}:00`
   );
+
+  const saveTripToDatabase = async () => {
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      const flightData = JSON.parse(localStorage.getItem('selectedFlight') || '{}');
+      const hotelData = JSON.parse(localStorage.getItem('selectedAccommodation') || '{}');
+      const attractionsData = JSON.parse(localStorage.getItem('selectedAttractions') || '[]');
+
+      const tripData = {
+        flightDetails: flightData,
+        hotelDetails: hotelData,
+        selectedActivities: attractionsData,
+        itinerary: {
+          dayPlans: dayPlans
+        },
+        tripDates: {
+          startDate: flightData.flight?.itineraries[0]?.segments[0]?.departureTime,
+          endDate: flightData.flight?.itineraries[1]?.segments[0]?.departureTime
+        }
+      };
+
+      const response = await fetch('YOUR_BACKEND_API_URL/trips', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add any auth headers if needed
+          // 'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(tripData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save trip');
+      }
+
+      // Clear localStorage after successful save
+      localStorage.removeItem('selectedFlight');
+      localStorage.removeItem('selectedAccommodation');
+      localStorage.removeItem('selectedAttractions');
+
+      // Navigate to success page or trip overview
+      navigate('/trip-success');
+
+    } catch (error) {
+      setSaveError((error as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Add a button or call this function when user finishes planning
+  const handleFinishPlanning = () => {
+    saveTripToDatabase();
+  };
 
   return (
     <motion.div 
@@ -301,6 +358,25 @@ const Itinerary: React.FC = () => {
           </motion.div>
         </div>
       </div>
+
+      <motion.button
+        onClick={handleFinishPlanning}
+        disabled={isSaving}
+        className={`px-6 py-3 rounded-xl shadow-lg flex items-center gap-2
+          ${isSaving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+      >
+        {isSaving ? (
+          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+        ) : (
+          'Save Trip'
+        )}
+      </motion.button>
+
+      {saveError && (
+        <div className="text-red-500 mt-2">
+          Error saving trip: {saveError}
+        </div>
+      )}
     </motion.div>
   );
 };

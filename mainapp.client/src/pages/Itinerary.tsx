@@ -25,6 +25,21 @@ interface DayPlan {
   }[];
 }
 
+interface ItineraryRequest {
+  startDate: string;
+  endDate: string;
+  dayPlans: {
+    date: string;
+    activities: {
+      id: string;
+      name: string;
+      startTime: string;
+      duration: number;
+      type: string;
+    }[];
+  }[];
+}
+
 const TimeSlotInfo: React.FC<{ selectedDay: number; flightTimes: { arrival: Date; departure: Date } }> = ({ 
   selectedDay, 
   flightTimes 
@@ -231,59 +246,64 @@ const Itinerary: React.FC = () => {
     `${i.toString().padStart(2, '0')}:00`
   );
 
-  const saveTripToDatabase = async () => {
+  const handleFinishPlanning = async () => {
     setIsSaving(true);
     setSaveError(null);
-    try {
-      const flightData = JSON.parse(localStorage.getItem('selectedFlight') || '{}');
-      const hotelData = JSON.parse(localStorage.getItem('selectedAccommodation') || '{}');
-      const attractionsData = JSON.parse(localStorage.getItem('selectedAttractions') || '[]');
 
-      const tripData = {
-        flightDetails: flightData,
-        hotelDetails: hotelData,
-        selectedActivities: attractionsData,
-        itinerary: {
-          dayPlans: dayPlans
-        },
-        tripDates: {
-          startDate: flightData.flight?.itineraries[0]?.segments[0]?.departureTime,
-          endDate: flightData.flight?.itineraries[1]?.segments[0]?.departureTime
-        }
+    try {
+      // Get stored data
+      const flightData = JSON.parse(localStorage.getItem('selectedFlight') || '{}');
+      const accommodationData = JSON.parse(localStorage.getItem('selectedAccommodation') || '{}');
+      
+      // Format the itinerary data
+      const itineraryData: ItineraryRequest = {
+        startDate: new Date(flightData.flight?.itineraries[0]?.segments[0]?.departureTime).toISOString(),
+        endDate: new Date(flightData.flight?.itineraries[1]?.segments[0]?.departureTime).toISOString(),
+        dayPlans: dayPlans.map(day => ({
+          date: day.date.toISOString(),
+          activities: day.activities.map(activity => ({
+            id: activity.id,
+            name: activity.name,
+            startTime: activity.startTime,
+            duration: activity.duration,
+            type: activity.type
+          }))
+        }))
       };
 
-      const response = await fetch('YOUR_BACKEND_API_URL/trips', {
+      // Get the auth token from localStorage or your auth state
+      const token = localStorage.getItem('token'); // Or from your auth state
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      // Save the itinerary
+      const response = await fetch('https://localhost:5193/api/Itinerary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Add any auth headers if needed
-          // 'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(tripData)
+        body: JSON.stringify(itineraryData)
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save trip');
+        throw new Error('Failed to save itinerary');
       }
 
-      // Clear localStorage after successful save
-      localStorage.removeItem('selectedFlight');
-      localStorage.removeItem('selectedAccommodation');
-      localStorage.removeItem('selectedAttractions');
-
-      // Navigate to success page or trip overview
-      navigate('/trip-success');
+      // Show success message and redirect to profile
+      navigate('/profile', { 
+        state: { 
+          message: 'Trip itinerary saved successfully!' 
+        } 
+      });
 
     } catch (error) {
-      setSaveError((error as Error).message);
+      console.error('Error saving itinerary:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to save itinerary');
     } finally {
       setIsSaving(false);
     }
-  };
-
-  // Add a button or call this function when user finishes planning
-  const handleFinishPlanning = () => {
-    saveTripToDatabase();
   };
 
   return (
@@ -467,19 +487,22 @@ const Itinerary: React.FC = () => {
       <motion.button
         onClick={handleFinishPlanning}
         disabled={isSaving}
-        className={`px-6 py-3 rounded-xl shadow-lg flex items-center gap-2
-          ${isSaving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+        className={`fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 z-10
+          ${isSaving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
       >
         {isSaving ? (
           <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
         ) : (
-          'Save Trip'
+          <>
+            Save Trip
+            <FaArrowRight />
+          </>
         )}
       </motion.button>
 
       {saveError && (
-        <div className="text-red-500 mt-2">
-          Error saving trip: {saveError}
+        <div className="fixed bottom-20 right-6 p-4 bg-red-100 text-red-600 rounded-lg shadow-lg">
+          {saveError}
         </div>
       )}
     </motion.div>

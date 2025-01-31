@@ -19,29 +19,171 @@ const Accommodations: React.FC = () => {
     location: '',
   });
 
-  const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
-
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
   };
 
-  const handleSearch = async () => {
-    try {
-        const response = await fetch('/api/Accommodations/showHotels', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(filters),
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  // Protection against direct access
+  useEffect(() => {
+    if (!canAccess('accommodations')) {
+      navigate('/flights');
+      return;
+    }
+
+    const flightData = JSON.parse(localStorage.getItem('selectedFlight') || '{}');
+    if (!flightData.destination) {
+      navigate('/flights');
+      return;
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    const loadGoogleMaps = async () => {
+      try {
+        const existingScript = document.getElementById('google-maps-script');
+        if (existingScript) {
+          document.head.removeChild(existingScript);
+        }
+
+        const flightData = JSON.parse(localStorage.getItem('selectedFlight') || '{}');
+        const destination = flightData.destination;
+
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.id = 'google-maps-script';
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
+          script.async = true;
+          script.defer = true;
+          
+          let mapInstance: google.maps.Map | null = null;
+
+          window.initMap = () => {
+            if (mapRef.current) {
+              const geocoder = new google.maps.Geocoder();
+              geocoder.geocode({ address: destination }, async (results, status) => {
+                if (status === 'OK' && results && results[0]) {
+                  const location = results[0].geometry.location;
+                  mapInstance = new google.maps.Map(mapRef.current!, {
+                    center: location,
+                    zoom: 14,
+                    mapId: 'DEMO_MAP_ID',
+                    styles: [
+                      {
+                        featureType: 'poi',
+                        elementType: 'labels',
+                        stylers: [{ visibility: 'off' }]
+                      }
+                    ]
+                  });
+                  setMap(mapInstance);
+
+                  const service = new google.maps.places.PlacesService(mapInstance);
+                  const request = {
+                    location: location,
+                    radius: 15000,
+                    type: 'lodging',
+                    rankBy: google.maps.places.RankBy.PROMINENCE
+                  } as google.maps.places.PlaceSearchRequest;
+
+                  service.nearbySearch(request, async (places, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && places) {
+                      const sortedHotels = sortHotels(places);
+                      setHotels(sortedHotels);
+                      
+                      const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+                      const newMarkers = sortedHotels.map(place => {
+                        if (place.geometry?.location) {
+                          const marker = new AdvancedMarkerElement({
+                            map: mapInstance,
+                            position: place.geometry.location,
+                            title: place.name
+                          });
+                          
+                          marker.addListener('click', () => handleHotelClick(place));
+                          return marker;
+                        }
+                        return null;
+                      }).filter(Boolean) as google.maps.marker.AdvancedMarkerElement[];
+                      
+                      setMarkers(newMarkers);
+                    }
+                    setLoading(false);
+                  });
+                }
+              });
+            }
+            resolve();
+          };
+
+          script.onerror = () => reject(new Error('Failed to load Google Maps script'));
+          document.head.appendChild(script);
+        });
+
+      } catch (error) {
+        console.error('Error loading Google Maps:', error);
+        setLoading(false);
+      }
+    };
+
+    loadGoogleMaps();
+
+    return () => {
+      // Cleanup function
+      const script = document.getElementById('google-maps-script');
+      if (script) {
+        document.head.removeChild(script);
+      }
+      // Clear all markers by removing them from the map
+      markers.forEach(marker => {
+        marker.map = null;
       });
-      
-      if (!response.ok) throw new Error('Failed to fetch accommodations');
-      
-      const data = await response.json();
-      setAccommodations(data);
-    } catch (error) {
-      console.error('Error fetching accommodations:', error);
+      setMarkers([]);
+      // Clear the map instance
+      if (map) {
+        const mapDiv = mapRef.current;
+        if (mapDiv) {
+          mapDiv.innerHTML = '';
+        }
+        setMap(null);
+      }
+    };
+  }, [sortBy]);
+
+  // Load bookmarks from localStorage
+  useEffect(() => {
+    const savedBookmarks = localStorage.getItem('bookmarkedItems');
+    if (savedBookmarks) {
+      setBookmarkedItems(new Set(JSON.parse(savedBookmarks)));
+    }
+  }, []);
+
+  // Toggle bookmark
+  const toggleBookmark = (item: BookmarkedItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newBookmarks = new Set(bookmarkedItems);
+    if (newBookmarks.has(item.id)) {
+      newBookmarks.delete(item.id);
+    } else {
+      newBookmarks.add(item.id);
+      // Placeholder for API call
+      console.log('Bookmark added:', item);
+      // TODO: Add API call to save bookmark
     }
   };
 

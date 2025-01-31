@@ -1,4 +1,4 @@
-using mainApp.Server.Controllers;
+﻿using mainApp.Server.Controllers;
 using mainApp.Server.Data;
 using mainApp.Server.Services;
 using Microsoft.AspNetCore.Identity;
@@ -78,6 +78,16 @@ builder.Services.AddCors(options =>
                   .AllowCredentials();
         });
 });
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/api/IdentityUser/signin";
+    //options.AccessDeniedPath = "/Account/AccessDenied";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
+
+builder.Services.AddAuthorization();
 
 
 var app = builder.Build();

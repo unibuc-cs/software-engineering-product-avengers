@@ -1,5 +1,6 @@
 ﻿using mainApp.Server.Data.DTO;
 using mainApp.Server.Utilities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mono.TextTemplating;
 using System.Text.Json;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class FlightsController : ControllerBase
 {
     private readonly AmadeusClient _amadeusClient;

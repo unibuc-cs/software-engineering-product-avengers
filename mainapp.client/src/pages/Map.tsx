@@ -21,15 +21,66 @@ const Map: React.FC = () => {
   const [center] = useState({ lat: 40.7128, lng: -74.0060 });
   const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
   const [attractions, setAttractions] = useState<google.maps.places.PlaceResult[]>([]);
+  const [selectedAttraction, setSelectedAttraction] = useState<google.maps.places.PlaceResult | null>(null);
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const [attractionType, setAttractionType] = useState<AttractionType>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('rating');
+  const [selectedAttractions, setSelectedAttractions] = useState<Set<string>>(new Set());
+  const [recommendations, setRecommendations] = useState<{
+    mustSee: google.maps.places.PlaceResult[];
+    popular: google.maps.places.PlaceResult[];
+  }>({
+    mustSee: [],
+    popular: []
+  });
+  const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set());
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  // Add this helper function at the top of the component
+  const cleanupGoogleMapsScript = () => {
+    const scripts = document.getElementsByTagName('script');
+    for (let i = scripts.length - 1; i >= 0; i--) {
+      const script = scripts[i];
+      if (script.src.includes('maps.googleapis.com') || script.id === 'google-maps-script') {
+        script.remove();
+      }
+    }
+  };
+
+  // Initialize map only once
   useEffect(() => {
-    const loadGoogleMaps = async () => {
-      try {
-        // Remove any existing script
-        const existingScript = document.getElementById('google-maps-script');
-        if (existingScript) {
-          document.head.removeChild(existingScript);
-        }
+    if (!canAccess('activities')) {
+      navigate('/flights');
+      return;
+    }
+
+    const hotelData = JSON.parse(localStorage.getItem('selectedAccommodation') || '{}');
+    if (!hotelData.geometry?.location) {
+      navigate('/accommodations');
+      return;
+    }
+
+    // Clean up any existing Google Maps scripts
+    cleanupGoogleMapsScript();
 
         // Load the Maps JavaScript API
         await new Promise<void>((resolve, reject) => {
@@ -62,14 +113,33 @@ const Map: React.FC = () => {
     loadGoogleMaps();
 
     return () => {
-      if (marker) {
-        (marker as any).setMap(null);
+      // Cleanup function
+      cleanupGoogleMapsScript();
+      
+      // Clear all markers
+      markers.forEach(marker => {
+        if (marker) marker.setMap(null);
+      });
+      setMarkers([]);
+      
+      // Clear the map instance
+      if (map) {
+        const mapDiv = mapRef.current;
+        if (mapDiv) {
+          mapDiv.innerHTML = '';
+        }
+        setMap(null);
       }
-      setMap(null);
-      setMarker(null);
-      delete window.initMap;
     };
-  }, [center]);
+  }, [navigate]); // Only run on mount and navigation changes
+
+  // Load bookmarks from localStorage
+  useEffect(() => {
+    const savedBookmarks = localStorage.getItem('bookmarkedItems');
+    if (savedBookmarks) {
+      setBookmarkedItems(new Set(JSON.parse(savedBookmarks)));
+    }
+  }, []);
 
   const handleSearch = () => {
     if (!map) return;

@@ -14,14 +14,21 @@ export const signUp = async (userData: UserData) => {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(userData), // Send user data as JSON
+    body: JSON.stringify(userData),
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
-    throw new Error('Failed to sign up'); // Handle error
+    // Throw the error data directly
+    throw {
+      response: {
+        data: data // This will contain the array of errors from the backend
+      }
+    };
   }
 
-  return await response.json(); // Return response data
+  return data;
 };
 
 export const logIn = async (userData: UserData) => {

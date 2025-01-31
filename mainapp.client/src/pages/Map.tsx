@@ -72,6 +72,17 @@ const Map: React.FC = () => {
     }
   };
 
+  // Add this helper function at the top of the component
+  const cleanupGoogleMapsScript = () => {
+    const scripts = document.getElementsByTagName('script');
+    for (let i = scripts.length - 1; i >= 0; i--) {
+      const script = scripts[i];
+      if (script.src.includes('maps.googleapis.com') || script.id === 'google-maps-script') {
+        script.remove();
+      }
+    }
+  };
+
   // Initialize map only once
   useEffect(() => {
     if (!canAccess('activities')) {
@@ -85,11 +96,8 @@ const Map: React.FC = () => {
       return;
     }
 
-    // Remove any existing script first
-    const existingScript = document.getElementById('google-maps-script');
-    if (existingScript) {
-      document.head.removeChild(existingScript);
-    }
+    // Clean up any existing Google Maps scripts
+    cleanupGoogleMapsScript();
 
     // Create the script element
     const script = document.createElement('script');
@@ -152,14 +160,14 @@ const Map: React.FC = () => {
 
     return () => {
       // Cleanup function
-      if (existingScript) {
-        document.head.removeChild(existingScript);
-      }
+      cleanupGoogleMapsScript();
+      
       // Clear all markers
       markers.forEach(marker => {
         if (marker) marker.setMap(null);
       });
       setMarkers([]);
+      
       // Clear the map instance
       if (map) {
         const mapDiv = mapRef.current;

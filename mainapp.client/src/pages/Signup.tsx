@@ -1,26 +1,83 @@
 // SignUp.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signUp } from '../api';
+import { FaCheck, FaTimes } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+
+interface PasswordRequirements {
+  minLength: boolean;
+  hasUpperCase: boolean;
+  hasNumber: boolean;
+  hasSpecialChar: boolean;
+}
 
 const SignUp = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState('');
+  const [passwordRequirements, setPasswordRequirements] = useState<PasswordRequirements>({
+    minLength: false,
+    hasUpperCase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
+
+  // Check password requirements whenever password changes
+  useEffect(() => {
+    setPasswordRequirements({
+      minLength: password.length >= 8,
+      hasUpperCase: /[A-Z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    });
+  }, [password]);
 
   const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission
-    setError(''); // Reset error message
+    e.preventDefault();
+    setError('');
+
+    // Check if all password requirements are met
+    const allRequirementsMet = Object.values(passwordRequirements).every(req => req);
+    if (!allRequirementsMet) {
+      setError('Please meet all password requirements');
+      return;
+    }
 
     try {
-      const result = await signUp({ email, password, firstName, lastName }); // Call signUp API
-      // Handle successful sign up (e.g., redirect or show message)
-      console.log('User registered:', result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred'); // Type guard for Error
+      await signUp({ email, password, firstName, lastName });
+      // After successful signup, navigate to login with state
+      navigate('/login', { 
+        state: { 
+          registrationSuccess: true,
+          message: 'Account registered successfully! Please log in.' 
+        } 
+      });
+    } catch (err: any) {
+      if (err.response?.data) {
+        const errors = err.response.data;
+        if (Array.isArray(errors)) {
+          const duplicateError = errors.find(e => e.code === 'DuplicateEmail');
+          if (duplicateError) {
+            setError(duplicateError.description);
+          } else {
+            setError(errors[0].description);
+          }
+        }
+      } else {
+        setError('An error occurred during registration');
+      }
     }
   };
+
+  const RequirementIndicator: React.FC<{ met: boolean, text: string }> = ({ met, text }) => (
+    <div className={`flex items-center gap-2 text-sm ${met ? 'text-green-600' : 'text-gray-500'}`}>
+      {met ? <FaCheck className="text-green-500" /> : <FaTimes className="text-gray-400" />}
+      {text}
+    </div>
+  );
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -78,6 +135,12 @@ const SignUp = () => {
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
+            <div className="mt-2 space-y-2">
+              <RequirementIndicator met={passwordRequirements.minLength} text="At least 8 characters" />
+              <RequirementIndicator met={passwordRequirements.hasUpperCase} text="At least one uppercase letter" />
+              <RequirementIndicator met={passwordRequirements.hasNumber} text="At least one number" />
+              <RequirementIndicator met={passwordRequirements.hasSpecialChar} text="At least one special character" />
+            </div>
           </div>
           <button
             type="submit"

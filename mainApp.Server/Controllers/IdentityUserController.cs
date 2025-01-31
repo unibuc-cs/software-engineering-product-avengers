@@ -1,4 +1,5 @@
 ﻿using mainApp.Server.Data;
+using mainApp.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,14 +11,14 @@ namespace mainApp.Server.Controllers
 
     public class userRegistrationModel
     {
-        public string Email { get; set; }
+        public string email { get; set; }
         public string password { get; set; }
         public string firstName { get; set; }
         public string lastName { get; set; }
     }
     public class userLoginModel
     {
-        public string mailOrUserName { get; set; }
+        public string email { get; set; }
         public string password { get; set; }
 
     }
@@ -27,30 +28,53 @@ namespace mainApp.Server.Controllers
     public class IdentityUserController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
         private readonly SignInManager<ApplicationUser> _signInManager;
  
 
-        public IdentityUserController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, EmailService email)
+        public IdentityUserController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, EmailService email)
         {
             _userManager = userManager;
+            _context = context;
             _signInManager = signInManager;
         }
 
         [HttpPost("signup")]
         public async Task<IActionResult> Register([FromBody] userRegistrationModel userRegistration)
         {
+            string userN;
+            Random rnd = new Random();
+            do
+            {
+                int random = rnd.Next(1, 100);
+                userN = $"{userRegistration.firstName}_{userRegistration.lastName}{random}";
+            } while (_context.Users.Any(us =>us.UserName == userN));
             var user = new ApplicationUser
             {
-                Email = userRegistration.Email,
-                UserName = $"{userRegistration.firstName}_{userRegistration.lastName}",
+                Email = userRegistration.email,
+                UserName = userN,
                 firstName = userRegistration.firstName,
                 lastName = userRegistration.lastName
             };
 
+
             var result = await _userManager.CreateAsync(user, userRegistration.password);
 
             if (result.Succeeded)
-                return Ok(result);
+            {
+                EmailService _emailManager = new EmailService();
+                try
+                {
+                    _emailManager.SendEmailAsync(user.Email, "Bine ai venit!", $"Bine ai venit pe aplicatia TravelMonser, abea asteptam sa te ajutam in calatoria ta!").Wait();
+                    return Ok(result);
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, new { message = ex.Message });
+                }
+               
+
+            }
 
             return BadRequest(result.Errors);
         }
@@ -65,11 +89,11 @@ namespace mainApp.Server.Controllers
         [HttpPost("signin")]
         public async Task<IActionResult> Login([FromBody] userLoginModel userLogin)
         {
-            var user = await _userManager.FindByEmailAsync(userLogin.mailOrUserName);
+            var user = await _userManager.FindByEmailAsync(userLogin.email); //mail or username
 
-            if (user == null)
+               if(user == null)
             {
-                user = await _userManager.FindByNameAsync(userLogin.mailOrUserName); // incearca varianta a doua poate este UserName-ul nu email-ul
+                user = await _userManager.FindByNameAsync(userLogin.email); //mail or username
             }
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, userLogin.password))

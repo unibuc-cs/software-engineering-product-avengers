@@ -35,6 +35,7 @@ const Accommodations: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set());
 
+<<<<<<< HEAD
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -43,6 +44,31 @@ const Accommodations: React.FC = () => {
         staggerChildren: 0.1,
         delayChildren: 0.2
       }
+=======
+  const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSearch = async () => {
+    try {
+        const response = await fetch('/api/Accommodations/showHotels', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(filters),
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch accommodations');
+      
+      const data = await response.json();
+      setAccommodations(data);
+    } catch (error) {
+      console.error('Error fetching accommodations:', error);
+>>>>>>> main
     }
   };
 

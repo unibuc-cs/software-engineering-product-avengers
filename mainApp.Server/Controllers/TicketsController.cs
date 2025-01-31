@@ -23,7 +23,7 @@ namespace mainApp.Server.Controllers
             _userManager = userManager;
         }
 
-        private async Task SaveTicketFromReservationResponse(ReservationRequestDto reservationResponse, string userId)
+        private async Task SaveTicketFromReservationResponse(ReservationTicketRequestDTO reservationResponse, string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
@@ -95,7 +95,7 @@ namespace mainApp.Server.Controllers
 
         [HttpPost("reserve")]
         [Authorize]
-        public async Task<IActionResult> ReserveTicket([FromBody] ReservationRequestDto reservationResponse, [FromQuery] string userId)
+        public async Task<IActionResult> ReserveTicket([FromBody] ReservationTicketRequestDTO reservationResponse, [FromQuery] string userId)
         {
             try
             {

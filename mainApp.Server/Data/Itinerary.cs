@@ -5,11 +5,12 @@ namespace mainApp.Server.Data
     public class Itinerary
     {
         [Key]
-        public int Id { get; set; }
-        public DateTime Time { get; set; }
-        public int TotalPrice { get; set; }
-        public virtual ApplicationUser? User { get; set; }
-        public ICollection<Location> Locations { get; set; }
+        public int ItineraryId { get; set; }
+        public string Userid { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
 
+        public List<DayPlan> DayPlans { get; set; }
     }
+
 }

@@ -110,6 +110,8 @@ app.UseSwaggerUI();
 app.UseHttpsRedirection(); // Enforce HTTPS for secure communication
 
 // Enable authorization middleware
+app.UseAuthentication();
+
 app.UseAuthorization();
 
 // Map controllers to API endpoints

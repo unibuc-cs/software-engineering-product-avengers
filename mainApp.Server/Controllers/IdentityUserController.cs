@@ -25,6 +25,7 @@ namespace mainApp.Server.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
+    [AllowAnonymous]
     public class IdentityUserController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -40,6 +41,7 @@ namespace mainApp.Server.Controllers
         }
 
         [HttpPost("signup")]
+
         public async Task<IActionResult> Register([FromBody] userRegistrationModel userRegistration)
         {
             string userN;

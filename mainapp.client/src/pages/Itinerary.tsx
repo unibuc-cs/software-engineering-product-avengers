@@ -25,6 +25,47 @@ interface DayPlan {
   }[];
 }
 
+const TimeSlotInfo: React.FC<{ selectedDay: number; flightTimes: { arrival: Date; departure: Date } }> = ({ 
+  selectedDay, 
+  flightTimes 
+}) => {
+  const isFirstDay = selectedDay === 0;
+  const lastDay = Math.floor((flightTimes.departure.getTime() - flightTimes.arrival.getTime()) / (1000 * 60 * 60 * 24));
+  const isLastDay = selectedDay === lastDay;
+
+  if (!isFirstDay && !isLastDay) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200"
+    >
+      <div className="flex items-start gap-3">
+        <div className="p-2 bg-blue-100 rounded-lg">
+          <FaClock className="text-blue-600 w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="font-medium text-blue-800">Time Restrictions for {isFirstDay ? 'Arrival' : 'Departure'} Day</h3>
+          <p className="text-blue-600 mt-1">
+            {isFirstDay ? (
+              <>
+                Your flight arrives at {flightTimes.arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
+                Activities can only be scheduled after arrival.
+              </>
+            ) : (
+              <>
+                Your flight departs at {flightTimes.departure.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
+                Activities can only be scheduled before departure.
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 const Itinerary: React.FC = () => {
   const dispatch = useAppDispatch();
   const [selectedDay, setSelectedDay] = useState<number>(0);
@@ -35,6 +76,10 @@ const Itinerary: React.FC = () => {
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [flightTimes, setFlightTimes] = useState<{
+    arrival: Date;
+    departure: Date;
+  }>({ arrival: new Date(), departure: new Date() });
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -56,26 +101,66 @@ const Itinerary: React.FC = () => {
     }
   };
 
+  const isTimeSlotAvailable = (timeSlot: string, dayIndex: number, flightTimes: {
+    arrival: Date;
+    departure: Date;
+  }) => {
+    const currentDate = new Date(flightTimes.arrival);
+    currentDate.setDate(currentDate.getDate() + dayIndex);
+    
+    const [hours] = timeSlot.split(':').map(Number);
+    const slotDate = new Date(currentDate);
+    slotDate.setHours(hours, 0, 0, 0);
+
+    // For first day, check if time slot is after arrival
+    if (dayIndex === 0) {
+      const arrivalHour = flightTimes.arrival.getHours();
+      if (hours < arrivalHour) return false;
+    }
+
+    // For last day, check if time slot is before departure
+    const lastDay = Math.floor((flightTimes.departure.getTime() - flightTimes.arrival.getTime()) / (1000 * 60 * 60 * 24));
+    if (dayIndex === lastDay) {
+      const departureHour = flightTimes.departure.getHours();
+      if (hours >= departureHour) return false;
+    }
+
+    return true;
+  };
+
   useEffect(() => {
     // Get all stored data
     const flightData = JSON.parse(localStorage.getItem('selectedFlight') || '{}');
     const accommodationData = JSON.parse(localStorage.getItem('selectedAccommodation') || '{}');
     const attractionsData = JSON.parse(localStorage.getItem('selectedAttractions') || '[]');
     
+    // Get arrival and departure times
+    const arrivalTime = new Date(flightData.flight?.itineraries[0]?.segments[0]?.arrivalTime);
+    const departureTime = new Date(flightData.flight?.itineraries[1]?.segments[0]?.departureTime);
+    
     // Calculate trip duration from flight data
-    const departureDate = new Date(flightData.flight?.itineraries[0]?.segments[0]?.departureTime);
-    const returnDate = new Date(flightData.flight?.itineraries[1]?.segments[0]?.departureTime);
-    const tripDays = Math.ceil((returnDate.getTime() - departureDate.getTime()) / (1000 * 60 * 60 * 24));
+    const tripDays = Math.ceil((departureTime.getTime() - arrivalTime.getTime()) / (1000 * 60 * 60 * 24));
     
     // Initialize day plans
     const initialDayPlans: DayPlan[] = [];
     for (let i = 0; i < tripDays; i++) {
-      const date = new Date(departureDate);
+      const date = new Date(arrivalTime);
       date.setDate(date.getDate() + i);
       
       const activities: DayPlan['activities'] = [];
-      // Add hotel wake up time for each day except departure
-      if (i > 0) {
+
+      // Add flight for first day
+      if (i === 0) {
+        activities.push({
+          id: 'arrival-flight',
+          name: 'Arrival Flight',
+          startTime: arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          duration: flightData.flight?.itineraries[0]?.segments[0]?.duration || 0,
+          type: 'flight'
+        });
+      }
+      // Add hotel wake up time for middle days
+      else if (i < tripDays - 1) {
         activities.push({
           id: 'hotel-morning',
           name: 'Start from Hotel',
@@ -84,21 +169,12 @@ const Itinerary: React.FC = () => {
           type: 'hotel'
         });
       }
-      
-      // Add flight for first and last day
-      if (i === 0) {
+      // Add departure flight for last day
+      else {
         activities.push({
           id: 'departure-flight',
           name: 'Departure Flight',
-          startTime: new Date(flightData.flight?.itineraries[0]?.segments[0]?.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          duration: flightData.flight?.itineraries[0]?.segments[0]?.duration || 0,
-          type: 'flight'
-        });
-      } else if (i === tripDays - 1) {
-        activities.push({
-          id: 'return-flight',
-          name: 'Return Flight',
-          startTime: new Date(flightData.flight?.itineraries[1]?.segments[0]?.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          startTime: departureTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           duration: flightData.flight?.itineraries[1]?.segments[0]?.duration || 0,
           type: 'flight'
         });
@@ -110,6 +186,9 @@ const Itinerary: React.FC = () => {
       });
     }
     setDayPlans(initialDayPlans);
+
+    // Store flight times for time slot validation
+    setFlightTimes({ arrival: arrivalTime, departure: departureTime });
 
     // Set available activities from selected attractions
     const activities: Activity[] = attractionsData.map((attraction: any) => ({
@@ -268,25 +347,51 @@ const Itinerary: React.FC = () => {
             initial="hidden"
             animate="visible"
           >
+            <TimeSlotInfo selectedDay={selectedDay} flightTimes={flightTimes} />
+            
             <div className="space-y-4">
               {timeSlots.map((timeSlot) => {
                 const activity = dayPlans[selectedDay]?.activities.find(
                   a => a.startTime === timeSlot
                 );
+                const isAvailable = isTimeSlotAvailable(timeSlot, selectedDay, flightTimes);
+
+                // Add hover title to explain why slot is unavailable
+                const getTimeSlotTitle = () => {
+                  if (!isAvailable) {
+                    if (selectedDay === 0) {
+                      return `This time slot is before your flight arrival at ${flightTimes.arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                    }
+                    const lastDay = Math.floor((flightTimes.departure.getTime() - flightTimes.arrival.getTime()) / (1000 * 60 * 60 * 24));
+                    if (selectedDay === lastDay) {
+                      return `This time slot is after your flight departure at ${flightTimes.departure.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                    }
+                  }
+                  return '';
+                };
 
                 return (
                   <motion.div
                     key={timeSlot}
                     variants={itemVariants}
                     className={`flex items-start gap-4 p-4 rounded-xl transition-all duration-200
-                      ${activity ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50 border border-transparent'}
+                      ${activity ? 'bg-blue-50 border border-blue-200' : 
+                        isAvailable ? 'hover:bg-gray-50 border border-transparent' : 'bg-gray-100 opacity-50 cursor-not-allowed'}
                       ${selectedTimeSlot === timeSlot ? 'ring-2 ring-blue-500' : ''}`}
                     onClick={() => {
-                      setSelectedTimeSlot(timeSlot);
-                      !activity && setShowActivityModal(true);
+                      if (isAvailable && !activity) {
+                        setSelectedTimeSlot(timeSlot);
+                        setShowActivityModal(true);
+                      }
                     }}
+                    title={getTimeSlotTitle()}
                   >
-                    <div className="w-20 font-medium text-gray-600">{timeSlot}</div>
+                    <div className={`w-20 font-medium ${isAvailable ? 'text-gray-600' : 'text-gray-400'}`}>
+                      {timeSlot}
+                      {!isAvailable && (
+                        <div className="text-xs text-red-400 mt-1">Unavailable</div>
+                      )}
+                    </div>
                     {activity ? (
                       <div className="flex-1 flex items-center justify-between">
                         <div className="flex items-center gap-3">

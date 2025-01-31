@@ -96,7 +96,7 @@ const Flights = () => {
       const response = await fetch(`https://travelmonster-hfbzhpg0dxf9dwan.germanywestcentral-01.azurewebsites.net/api/flights/offers?${query}`);
       
       if (!response.ok) {
-        throw new Error("Failed to fetch flights");
+        throw new Error("No flights available for this period and destination.");
       }
 
       const data = await response.json();

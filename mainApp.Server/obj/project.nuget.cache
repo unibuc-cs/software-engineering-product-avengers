@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "mbQn/D+JyDQ5kmVR6n5HqUQetL1VpnxFITDz626KdtjhXdT9J4EDZ9Da6PCnFNmOfWsJIzcuoByJMrcEHr0+Vw==",
+  "dgSpecHash": "aY5MbRwHxni93tzy/VeZB2KhPR6jnGZ/iv5eP/HNyXtaOWWWTeax288WJNt1W7sZh40ypsrPi/fqec4fPJBW8Q==",
   "success": true,
-  "projectFilePath": "Z:\\TravelMonsterWeb\\software-engineering-product-avengers\\mainapp.server\\mainApp.Server.csproj",
+  "projectFilePath": "Z:\\TravelMonsterWeb\\software-engineering-product-avengers\\mainApp.Server\\mainApp.Server.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Carlo\\.nuget\\packages\\azure.core\\1.25.0\\azure.core.1.25.0.nupkg.sha512",
     "C:\\Users\\Carlo\\.nuget\\packages\\azure.identity\\1.7.0\\azure.identity.1.7.0.nupkg.sha512",

@@ -24,6 +24,9 @@ interface BookmarkedItem {
   details?: string;
 }
 
+const randomRange = (min: number, max: number): number => 
+  Math.floor(Math.random() * (max - min + 1)) + min;
+
 const Accommodations: React.FC = () => {
   const navigate = useNavigate();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -228,7 +231,19 @@ const Accommodations: React.FC = () => {
         setMap(null);
       }
 
-      localStorage.setItem('selectedAccommodation', JSON.stringify(selectedHotel));
+      // Format hotel data with specific fields
+      const hotelData = {
+        name: selectedHotel.name || '',
+        rating: selectedHotel.rating || 0,
+        priceLevel: selectedHotel.price_level || 0,
+        price: randomRange(100, 1000), 
+        openingHour: selectedHotel.opening_hours?.weekday_text?.[0] || 'Open 24/7',
+        address: selectedHotel.formatted_address || selectedHotel.vicinity || '',
+        locationLat: selectedHotel.geometry?.location?.lat() || 0,
+        locationLng: selectedHotel.geometry?.location?.lng() || 0
+      };
+
+      localStorage.setItem('selectedAccommodation', JSON.stringify(hotelData));
       updateNavigationState('activities');
       navigate('/map');
     } else {

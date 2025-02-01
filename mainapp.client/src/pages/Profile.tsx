@@ -13,6 +13,12 @@ interface BookmarkedItem {
   details?: string;
 }
 
+
+interface userProfile {
+    email: string;
+    fullName: string;
+   
+}
 const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate(); // Use useNavigate instead of useHistory
@@ -167,7 +173,6 @@ const Profile: React.FC = () => {
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                {currentUser.name}
               </h1>
               <p className="text-gray-600">{currentUser.email}</p>
             </div>

@@ -96,11 +96,18 @@ namespace mainApp.Server.Controllers
                 userHousing.UserId = user.Id;
                 _context.UserHousings.Add(userHousing);
                 await _context.SaveChangesAsync();
-                string message = $"Hey, multumim pentru increderea acordata {user.firstName} " +
-                    $"{user.lastName} rezervarea ta la {housing.Name},{housing.Address} a fost plasata! " +
-                    $"\n CheckIn: {userHousing.CheckIn}\n CheckOut: {userHousing.CheckOut}" +
-                    $"\n O zi faina in continuare, Echipa TravelMonster!";
-                await _emailService.SendEmailAsync(user.Email, "Rezervare Confirmata", message);
+                
+                var reservation = new ReservationDto
+                {
+                    name = user.firstName + " " + user.lastName,
+                    hotel = housing.Name,
+                    address = housing.Address,
+                    checkin = userHousing.CheckIn.ToShortDateString(),
+                    checkout = userHousing.CheckOut.ToShortDateString(),
+                    link = "https://travelmonster-hfbzhpg0dxf9dwan.germanywestcentral-01.azurewebsites.net/profile"
+
+                };
+                await _emailService.SendEmailReservationAsync(user.Email,reservation);
             }
             catch (Exception ex)
             {

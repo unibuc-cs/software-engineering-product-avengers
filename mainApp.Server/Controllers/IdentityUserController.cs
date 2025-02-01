@@ -108,8 +108,9 @@ namespace mainApp.Server.Controllers
         }
         [HttpGet("myProfile")]
         [Authorize]
-        public async Task<IActionResult> GetUserProfile()
+        public async Task<IActionResult> GetUserProfile(string token)
         {
+            
             var user = await _userManager.GetUserAsync(User);
 
             if (user == null)

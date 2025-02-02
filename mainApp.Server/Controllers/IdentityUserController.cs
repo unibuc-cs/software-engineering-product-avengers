@@ -1,10 +1,15 @@
 ﻿using mainApp.Server.Data;
+using mainApp.Server.Data.DTO;
 using mainApp.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using NuGet.Common;
+using NuGet.Protocol;
+using System.Text;
+using System.Text.Json;
 
 namespace mainApp.Server.Controllers
 {
@@ -108,7 +113,7 @@ namespace mainApp.Server.Controllers
         }
         [HttpGet("myProfile")]
         [Authorize]
-        public async Task<IActionResult> GetUserProfile(string token)
+        public async Task<IActionResult> GetUserProfile()
         {
             
             var user = await _userManager.GetUserAsync(User);
@@ -117,15 +122,64 @@ namespace mainApp.Server.Controllers
             {
                 return NotFound();
             }
-            var UserProfile = new
+            var userData = await _context.Users
+          .Where(u => u.Id == user.Id)
+          .Include(u => u.Itineraries).ThenInclude(u=>u.DayPlans).ThenInclude(u=>u.Activities)
+          .Include(i => i.Tickets)
+          .ThenInclude(t => t.Flights)
+          .Include(u => u.userHousings)
+          .ThenInclude(h => h.Housing)
+          .FirstOrDefaultAsync();
+            var userProfile = new UserProfile
             {
-                email = user.Email,
-                fullName = user.lastName + " " + user.firstName,
-                activeHousing = user.userHousings.Where(x => x.CheckIn <= DateTime.Now).ToArray(),
-                activeTickets = user.Tickets.Where(x => x.Flights.Arrival <= DateTime.Now).ToArray(),
-                itineraries = user.Itineraries.ToArray()
+                FullName = user.UserName,
+                Email = user.Email,
+                Itineraries = user.Itineraries.Select(i => new ItineraryResponseDto
+                {
+                  
+                    StartDate = i.startDate,
+                    EndDate = i.EndDate,
+                    DayPlans = i.DayPlans?
+                   .Select(dp => new DayPlanDTO
+                    {
+                       
+                        Date = dp.Date,
+                        activities = dp.Activities?
+                            .Distinct()
+                            .Select(a => new ActivityDto
+                            {
+                               
+                                
+                                Name = a.Name,
+                                StartTime = a.StartTime,
+                                Duration = a.Duration,
+                                Type = a.Type
+                            }).ToList() ?? new List<ActivityDto>()
+                    }).ToList() ?? new List<DayPlanDTO>()
+                }).ToList(),
+
+                UserHousings = user.userHousings.Select(h => new HousingDto
+                {
+                    Rating = h.Housing.Rating,
+                    Name = h.Housing.Name,
+                    Address = h.Housing.Address,
+                    OpeningHours = h.Housing.OpeningHours,
+                    Price = h.Housing.Price
+                }).ToList(),
+                Tickets = user.Tickets.Select(t => new TicketDto
+                {
+                    TotalPrice = t.TotalPrice,
+                    flights = t.Flights != null ? new List<FlightDTO>
+                {
+                    new FlightDTO
+                    {
+                        DepartureAirport = t.Flights.DepartureAirport,
+                        Destination = t.Flights.Destination
+                    }
+                } : new List<FlightDTO>()
+                }).ToList()
             };
-            return Ok(UserProfile);
+            return Ok(JsonSerializer.Serialize(userProfile, new JsonSerializerOptions { WriteIndented = true }));
         }
 
         [HttpPost("activateemail")]

@@ -8,8 +8,10 @@ namespace mainApp.Server.Data
         [Key]
         public int Id { get; set; }
         public int TotalPrice {  get; set; }
+        public string UserId {  get; set; }
+        public int FlightsId { get; set; }
         public virtual ApplicationUser? User { get; set; }
-        public virtual Flight Flights { get; set; }
-        public virtual ICollection<Seat>? Seats { get; set; }
+        public virtual Flight ?Flights { get; set; }
+      //  public virtual ICollection<Seat>? Seats { get; set; }
     }
 }

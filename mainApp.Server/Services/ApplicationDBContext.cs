@@ -10,21 +10,12 @@ namespace mainApp.Server.Services
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
+       
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<Itinerary>()
-               .HasMany(i => i.DayPlans)
-               .WithOne(d => d.Itinerary)
-               .HasForeignKey(d => d.ItineraryId)
-               .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<DayPlan>()
-                .HasMany(d => d.Activities)
-                .WithOne(a => a.DayPlan)
-                .HasForeignKey(a => a.DayPlanId)
-                .OnDelete(DeleteBehavior.Cascade);
+           
 
             base.OnModelCreating(builder);
         }

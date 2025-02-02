@@ -28,7 +28,7 @@ namespace mainApp.Server.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-
+   [Authorize]
     public class AccommodationsController : ControllerBase
     {
         private readonly GooglePlacesService _placeService;
@@ -47,7 +47,7 @@ namespace mainApp.Server.Controllers
 
         private async Task SaveHotelReservationResponse(Accommodation reservationResponse, userCheck userCheck)
         {
-            var user = await _userManager.FindByIdAsync(userCheck.userId);
+            var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
                 throw new Exception("User not found.");
@@ -67,6 +67,7 @@ namespace mainApp.Server.Controllers
                 priceLevel = "High";
             }
 
+           
             Housing housing = new Housing
             {
                 Rating = (int)reservationResponse.rating,
@@ -83,7 +84,6 @@ namespace mainApp.Server.Controllers
             {
                 Housing = housing,
                 User = user,
-               
                 CheckIn = userCheck.CheckIn,
                 CheckOut = userCheck.CheckOut,
             };
@@ -226,18 +226,28 @@ namespace mainApp.Server.Controllers
 
 
         [HttpPost("reserve")]
-       // [Authorize]
-        public async Task<IActionResult> ReserveAccommodation([FromBody] Accommodation reservationResponse, [FromQuery] userCheck userCheck)
+        
+        public async Task<IActionResult> ReserveAccommodation([FromBody] AccommodationAndFlight reservationResponse)
         {
+            var user =await _userManager.GetUserAsync(User);
+
+            userCheck userCheck = new userCheck
+            {
+                userId = user.Id.ToString(),
+                CheckIn = reservationResponse.flightDetails.Itineraries[0].Segments[0].ArrivalTime,
+                CheckOut = reservationResponse.flightDetails.Itineraries[0].Segments.Last().DepartureTime,
+
+
+            };
             try
             {
-                await SaveHotelReservationResponse(reservationResponse, userCheck);
+                await SaveHotelReservationResponse(reservationResponse.hotelDetails, userCheck);
 
-                return Ok(new { Message = "Accommodation reserved successfully." });
+                return StatusCode(200,new { Message = "Accommodation reserved successfully." });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "An error occurred.", Details = ex.Message });
+                return StatusCode(401, new { Message = "An error occurred.", Details = ex.Message });
             }
         }
     }

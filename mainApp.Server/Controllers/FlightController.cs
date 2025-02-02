@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[AllowAnonymous]
 public class FlightsController : ControllerBase
 {
     private readonly AmadeusClient _amadeusClient;
@@ -62,6 +62,7 @@ public class FlightsController : ControllerBase
         return flights;
     }
 
+    [AllowAnonymous]
     [HttpGet("offers")]
     public async Task<IActionResult> GetFlightOffers([FromQuery] string origin, [FromQuery] string destination, [FromQuery] string departureDate, [FromQuery] string returnDate, [FromQuery] int numberofAdults)
     {

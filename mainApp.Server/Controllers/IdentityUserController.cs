@@ -36,13 +36,14 @@ namespace mainApp.Server.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly SignInManager<ApplicationUser> _signInManager;
- 
+        private readonly JwtService _jwtService;
 
-        public IdentityUserController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, EmailService email)
+        public IdentityUserController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, EmailService email, JwtService jwtService)
         {
             _userManager = userManager;
             _context = context;
             _signInManager = signInManager;
+            _jwtService = jwtService;
         }
 
         [HttpPost("signup")]
@@ -96,20 +97,28 @@ namespace mainApp.Server.Controllers
         [HttpPost("signin")]
         public async Task<IActionResult> Login([FromBody] userLoginModel userLogin)
         {
-            var user = await _userManager.FindByEmailAsync(userLogin.email); //mail or username
+            var user = await _userManager.FindByEmailAsync(userLogin.email);
 
-               if(user == null)
+            if(user == null)
             {
-                user = await _userManager.FindByNameAsync(userLogin.email); //mail or username
+                user = await _userManager.FindByNameAsync(userLogin.email);
             }
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, userLogin.password))
             {
                 return Unauthorized(new { message = "Parola sau Username-ul este gresit!" });
             }
-            await _signInManager.SignInAsync(user, isPersistent: false);
-            return Ok(new { message = "Bine ai revenit! ", user = user.UserName });
 
+            await _signInManager.SignInAsync(user, isPersistent: false);
+            
+            // Generate JWT token
+            var token = _jwtService.GenerateToken(user);
+            
+            return Ok(new { 
+                message = "Bine ai revenit! ", 
+                user = user.UserName,
+                token = token
+            });
         }
         [HttpGet("myProfile")]
         [Authorize]
@@ -228,6 +237,6 @@ namespace mainApp.Server.Controllers
             }
         }
 
-       
+
     }
 }

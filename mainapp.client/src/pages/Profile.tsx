@@ -1,30 +1,62 @@
 import React, { useEffect, useState } from 'react';
-import { useAppSelector, useAppDispatch } from '../hooks/redux'; // Ensure correct path
+import { useAppSelector, useAppDispatch } from '../hooks/redux';
 import { logout } from '../store/slices/userSlice';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom'; // Updated import
-import { FaUser, FaHeart, FaHistory, FaSignOutAlt, FaMapMarkedAlt, FaHotel, FaPlaneDeparture } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaUser, FaHeart, FaHistory, FaSignOutAlt, FaMapMarkedAlt, FaHotel, FaPlaneDeparture, FaClock, FaCalendar, FaStar } from 'react-icons/fa';
+import { fetchUserProfile } from '../api';
 
-interface BookmarkedItem {
-  id: string;
-  type: 'attraction' | 'hotel' | 'flight';
-  name: string;
-  image?: string;
-  details?: string;
+interface Activity {
+  Name: string;
+  StartTime: string;
+  Duration: number;
+  Type: string;
 }
 
-
-interface userProfile {
-    email: string;
-    fullName: string;
-   
+interface DayPlan {
+  Date: string;
+  activities: Activity[];
 }
+
+interface Itinerary {
+  StartDate: string;
+  EndDate: string;
+  DayPlans: DayPlan[];
+}
+
+interface UserHousing {
+  Rating: number;
+  Name: string;
+  Address: string;
+  OpeningHours: string;
+  Price: number;
+}
+
+interface Flight {
+  DepartureAirport: string;
+  Destination: string;
+}
+
+interface Ticket {
+  TotalPrice: number;
+  flights: Flight[];
+}
+
+interface UserProfile {
+  FullName: string;
+  Email: string;
+  Itineraries: Itinerary[];
+  UserHousings: UserHousing[];
+  Tickets: Ticket[];
+}
+
 const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate(); // Use useNavigate instead of useHistory
-  const { currentUser } = useAppSelector(state => state.user);
-  const [bookmarkedItems, setBookmarkedItems] = useState<BookmarkedItem[]>([]);
-  const [travelHistory, setTravelHistory] = useState<any[]>([]);
+  const navigate = useNavigate();
+  const { user } = useAppSelector(state => state.user);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -47,38 +79,22 @@ const Profile: React.FC = () => {
   };
 
   useEffect(() => {
-    // Load bookmarks from localStorage
-    const savedBookmarks = localStorage.getItem('bookmarkedItems');
-    if (savedBookmarks) {
-      const bookmarkIds = new Set<string>(JSON.parse(savedBookmarks));
-      // TODO: Replace with actual API call to get bookmark details
-      const mockBookmarks: BookmarkedItem[] = Array.from(bookmarkIds).map(id => ({
-        id: id.toString(),
-        type: 'attraction',
-        name: 'Sample Attraction',
-        details: 'Sample location'
-      }));
-      setBookmarkedItems(mockBookmarks);
-    }
-
-    // TODO: Replace with actual API call to get travel history
-    setTravelHistory([
-      {
-        id: '1',
-        destination: 'Paris, France',
-        date: '2024-01-15',
-        duration: '7 days',
-        image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=500&q=80'
-      },
-      {
-        id: '2',
-        destination: 'Tokyo, Japan',
-        date: '2023-11-20',
-        duration: '10 days',
-        image: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=500&q=80'
+    const loadUserProfile = async () => {
+      try {
+        const data = await fetchUserProfile();
+        setUserProfile(data);
+      } catch (err) {
+        setError('Failed to load profile data');
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    ]);
-  }, []);
+    };
+
+    if (user) {
+      loadUserProfile();
+    }
+  }, [user]);
 
   // Redirect to the Login page
   const handleLoginRedirect = () => {
@@ -90,14 +106,8 @@ const Profile: React.FC = () => {
     navigate('/signup');
   };
 
-  const removeBookmark = (itemId: string) => {
-    const newBookmarks = bookmarkedItems.filter(item => item.id !== itemId);
-    setBookmarkedItems(newBookmarks);
-    localStorage.setItem('bookmarkedItems', JSON.stringify(newBookmarks.map(item => item.id)));
-  };
-
   // If user is not authenticated
-  if (!currentUser) {
+  if (!user) {
     return (
       <motion.div 
         className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-12 px-4"
@@ -143,6 +153,22 @@ const Profile: React.FC = () => {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500 text-xl">{error}</div>
+      </div>
+    );
+  }
+
   // If user is authenticated
   return (
     <motion.div 
@@ -159,22 +185,15 @@ const Profile: React.FC = () => {
         >
           <div className="flex items-center gap-6">
             <div className="relative">
-              {currentUser.avatar ? (
-                <img 
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
-                  className="w-24 h-24 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
-                  <FaUser className="w-12 h-12 text-white" />
-                </div>
-              )}
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+                <FaUser className="w-12 h-12 text-white" />
+              </div>
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                {userProfile?.FullName}
               </h1>
-              <p className="text-gray-600">{currentUser.email}</p>
+              <p className="text-gray-600">{userProfile?.Email}</p>
             </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -189,47 +208,6 @@ const Profile: React.FC = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Bookmarks Section */}
-          <motion.div variants={itemVariants} className="space-y-6">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <FaHeart className="text-red-500" />
-              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Your Bookmarks
-              </span>
-            </h2>
-            <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
-              {bookmarkedItems.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No bookmarks yet</p>
-              ) : (
-                bookmarkedItems.map(item => (
-                  <motion.div
-                    key={item.id}
-                    whileHover={{ scale: 1.02 }}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-blue-50 transition-colors"
-                  >
-                    <div className="p-3 rounded-lg bg-blue-100">
-                      {item.type === 'attraction' && <FaMapMarkedAlt className="w-6 h-6 text-blue-600" />}
-                      {item.type === 'hotel' && <FaHotel className="w-6 h-6 text-blue-600" />}
-                      {item.type === 'flight' && <FaPlaneDeparture className="w-6 h-6 text-blue-600" />}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{item.name}</h3>
-                      <p className="text-sm text-gray-600">{item.details}</p>
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => removeBookmark(item.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <FaHeart className="w-5 h-5" />
-                    </motion.button>
-                  </motion.div>
-                ))
-              )}
-            </div>
-          </motion.div>
-
           {/* Travel History Section */}
           <motion.div variants={itemVariants} className="space-y-6">
             <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -238,29 +216,121 @@ const Profile: React.FC = () => {
                 Travel History
               </span>
             </h2>
-            <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
-              {travelHistory.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6">
+              {userProfile?.Itineraries.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No travel history yet</p>
               ) : (
-                travelHistory.map(trip => (
+                userProfile?.Itineraries.map((itinerary, index) => (
                   <motion.div
-                    key={trip.id}
+                    key={index}
                     whileHover={{ scale: 1.02 }}
-                    className="relative overflow-hidden rounded-xl shadow-md group"
+                    className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 space-y-4"
                   >
-                    <img 
-                      src={trip.image} 
-                      alt={trip.destination}
-                      className="w-full h-48 object-cover transform group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-                      <h3 className="text-xl font-bold text-white">{trip.destination}</h3>
-                      <p className="text-gray-200">
-                        {new Date(trip.date).toLocaleDateString()} • {trip.duration}
-                      </p>
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <FaCalendar className="text-blue-500" />
+                          <span className="font-semibold">
+                            {new Date(itinerary.StartDate).toLocaleDateString()} - {new Date(itinerary.EndDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      {itinerary.DayPlans.map((day, dayIndex) => (
+                        <div key={dayIndex} className="bg-white rounded-lg p-4 space-y-3">
+                          <h4 className="font-semibold text-gray-700">
+                            {new Date(day.Date).toLocaleDateString()}
+                          </h4>
+                          <div className="space-y-2">
+                            {day.activities.map((activity, actIndex) => (
+                              <div key={actIndex} className="flex items-center gap-3 text-sm">
+                                <FaClock className="text-blue-400" />
+                                <span className="font-medium">{activity.StartTime}</span>
+                                <span className="text-gray-600">{activity.Name}</span>
+                                <span className="text-gray-400">({activity.Duration} min)</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </motion.div>
                 ))
+              )}
+            </div>
+          </motion.div>
+
+          {/* Accommodations History */}
+          <motion.div variants={itemVariants} className="space-y-6">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <FaHotel className="text-blue-500" />
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Past Accommodations
+              </span>
+            </h2>
+            <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
+              {userProfile?.UserHousings.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No accommodation history yet</p>
+              ) : (
+                userProfile?.UserHousings.map((housing, index) => (
+                  <motion.div
+                    key={index}
+                    whileHover={{ scale: 1.02 }}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-blue-50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{housing.Name}</h3>
+                      <p className="text-sm text-gray-600">{housing.Address}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center">
+                          <FaStar className="text-yellow-400 w-4 h-4" />
+                          <span className="ml-1 text-sm">{housing.Rating}</span>
+                        </div>
+                        <span className="text-sm text-gray-600">${housing.Price}/night</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          </motion.div>
+
+          {/* Flight History */}
+          <motion.div variants={itemVariants} className="space-y-6 lg:col-span-2">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <FaPlaneDeparture className="text-blue-500" />
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Flight History
+              </span>
+            </h2>
+            <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
+              {userProfile?.Tickets.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No flight history yet</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {userProfile?.Tickets.map((ticket, index) => (
+                    <motion.div
+                      key={index}
+                      whileHover={{ scale: 1.02 }}
+                      className="bg-gray-50 rounded-xl p-4 space-y-3"
+                    >
+                      {ticket.flights.map((flight, flightIndex) => (
+                        <div key={flightIndex} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FaPlaneDeparture className="text-blue-500" />
+                            <span>{flight.DepartureAirport}</span>
+                            <span>→</span>
+                            <span>{flight.Destination}</span>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="text-right text-blue-600 font-semibold">
+                        ${ticket.TotalPrice}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               )}
             </div>
           </motion.div>

@@ -1,14 +1,19 @@
 // src/api.js (or src/utils/api.js or src/services/api.js)
 const API_URL = 'https://localhost:5193/api/IdentityUser'; // Update with your backend URL
 
-interface UserData {
+interface SignUpData {
   email: string;
   password: string;
-  firstName?: string;  // Optional for login
-  lastName?: string;   // Optional for login
+  firstName: string;  // Required for signup
+  lastName: string;   // Required for signup
 }
 
-export const signUp = async (userData: UserData) => {
+interface LoginData {
+  email: string;
+  password: string;
+}
+
+export const signUp = async (userData: SignUpData) => {
   const response = await fetch(`${API_URL}/signup`, {
     method: 'POST',
     headers: {
@@ -31,33 +36,49 @@ export const signUp = async (userData: UserData) => {
   return data;
 };
 
-export const logIn = async (userData: UserData) => {
+export const logIn = async (userData: LoginData) => {
   const response = await fetch(`${API_URL}/signin`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(userData), // Send user data as JSON
+    body: JSON.stringify(userData),
   });
 
   if (!response.ok) {
-    throw new Error('Failed to log in'); // Handle error
+    throw new Error('Failed to log in');
   }
 
-  return await response.json(); // Return response data
+  const data = await response.json();
+  return {
+    user: data.user,
+    token: data.token,
+    message: data.message
+  };
 };
 
-export const fetchUserProfile = async (token: string) => {
+const createAuthHeader = (): Record<string, string> => {
+  const token = localStorage.getItem('token');
+  return token 
+    ? { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      }
+    : { 'Content-Type': 'application/json' };
+};
+
+export const fetchUserProfile = async () => {
   const response = await fetch(`${API_URL}/myProfile`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${token}`, // Include token in authorization header
+      ...createAuthHeader(),
+      'Content-Type': 'application/json',
     },
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch user profile'); // Handle error
+    throw new Error('Failed to fetch user profile');
   }
 
-  return await response.json(); // Return response data
+  return await response.json();
 };

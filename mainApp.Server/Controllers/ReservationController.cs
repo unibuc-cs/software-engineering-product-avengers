@@ -12,7 +12,7 @@ using System.Net;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] 
+[Authorize]
 public class ReservationController : ControllerBase
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -32,12 +32,18 @@ public class ReservationController : ControllerBase
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return Unauthorized(new { Message = "User not found" });
 
+        // Get the authorization header
+        var authHeader = Request.Headers["Authorization"].ToString();
+        if (string.IsNullOrEmpty(authHeader))
+            return Unauthorized(new { Message = "No authorization token provided" });
+
         string userId = user.Id;
 
         var handler = new HttpClientHandler
         {
             UseCookies = true,
-            CookieContainer = new CookieContainer()
+            CookieContainer = new CookieContainer(),
+            ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
         };
         if (HttpContext.Request.Cookies.TryGetValue(".AspNetCore.Identity.Application", out var authCookie))
         {
@@ -49,9 +55,11 @@ public class ReservationController : ControllerBase
         // Creează HttpClient-ul folosind handler-ul configurat
         using var client = new HttpClient(handler)
         {
-           
             Timeout = TimeSpan.FromMinutes(10)
         };
+
+        // Add authorization header to the client
+        client.DefaultRequestHeaders.Add("Authorization", authHeader);
 
         var flightResponse = await client.PostAsync(
             "https://localhost:5193/api/Tickets/reserve",

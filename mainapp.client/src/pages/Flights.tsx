@@ -93,7 +93,7 @@ const Flights = () => {
 
     try {
       const query = new URLSearchParams(searchParams).toString();
-      const response = await fetch(`https://travelmonster-hfbzhpg0dxf9dwan.germanywestcentral-01.azurewebsites.net/api/flights/offers?${query}`);
+      const response = await fetch(`https://localhost:5193/api/Flights/offers?${query}`);
       
       if (!response.ok) {
         throw new Error("No flights available for this period and destination.");

@@ -251,56 +251,107 @@ const Itinerary: React.FC = () => {
     setSaveError(null);
 
     try {
-      // Get stored data
-      const flightData = JSON.parse(localStorage.getItem('selectedFlight') || '{}');
-      const accommodationData = JSON.parse(localStorage.getItem('selectedAccommodation') || '{}');
-      
-      // Format the itinerary data
-      const itineraryData: ItineraryRequest = {
-        startDate: new Date(flightData.flight?.itineraries[0]?.segments[0]?.departureTime).toISOString(),
-        endDate: new Date(flightData.flight?.itineraries[1]?.segments[0]?.departureTime).toISOString(),
-        dayPlans: dayPlans.map(day => ({
-          date: day.date.toISOString(),
-          activities: day.activities.map(activity => ({
-            id: activity.id,
-            name: activity.name,
-            startTime: activity.startTime,
-            duration: activity.duration,
-            type: activity.type
-          }))
-        }))
-      };
-
-      // Get the auth token from localStorage or your auth state
-      const token = localStorage.getItem('token'); // Or from your auth state
+      const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Not authenticated');
       }
 
-      // Save the itinerary
-      const response = await fetch('https://localhost:5193/api/Itinerary', {
+      const flightData = JSON.parse(localStorage.getItem('selectedFlight') || '{}');
+      const hotelData = JSON.parse(localStorage.getItem('selectedAccommodation') || '{}');
+      
+      // Format dates properly and ensure all required fields are present
+      const startDate = flightData.flight?.itineraries?.[0]?.segments?.[0]?.departureTime 
+        ? new Date(flightData.flight.itineraries[0].segments[0].departureTime).toISOString()
+        : new Date().toISOString();
+      
+      const endDate = flightData.flight?.itineraries?.[1]?.segments?.[0]?.departureTime
+        ? new Date(flightData.flight.itineraries[1].segments[0].departureTime).toISOString()
+        : new Date().toISOString();
+
+      const reservationData = {
+        flightDetails: {
+          itineraries: flightData.flight?.itineraries?.map((itinerary: any) => ({
+            segments: itinerary.segments?.map((segment: any) => ({
+              departureAirport: segment.departureAirport || "Unknown",
+              departureTime: new Date(segment.departureTime).toISOString(),
+              arrivalAirport: segment.arrivalAirport || "Unknown",
+              arrivalTime: new Date(segment.arrivalTime).toISOString(),
+              carrierCode: segment.carrierCode || "Unknown",
+              flightNumber: segment.flightNumber || "Unknown",
+              duration: (segment.duration || 0).toString()
+            })) || []
+          })) || [],
+          price: {
+            currency: flightData.flight?.price?.currency || "EUR",
+            total: (flightData.flight?.price?.total || "0").toString(),
+            base: (flightData.flight?.price?.base || "0").toString()
+          }
+        },
+        hotelDetails: {
+          placeId: hotelData.place_id || "Unknown",
+          address: hotelData.formatted_address || hotelData.vicinity || "Unknown",
+          name: hotelData.name || "Unknown",
+          rating: Number(hotelData.rating) || 0,
+          totalUserRating: Number(hotelData.user_ratings_total) || 0,
+          location: {
+            latitude: Number(hotelData.geometry?.location?.lat) || 0,
+            longitude: Number(hotelData.geometry?.location?.lng) || 0
+          },
+          price: Number(hotelData.price) || 0,
+          photos: Array.isArray(hotelData.photos) 
+            ? hotelData.photos.map((photo: any) => photo.getUrl?.() || "").filter(Boolean)
+            : []
+        },
+        itinerary: {
+          startDate,
+          endDate,
+          dayPlans: dayPlans.map(day => ({
+            date: day.date.toISOString(),
+            activities: day.activities.map(activity => ({
+              name: activity.name || "Unknown Activity",
+              startTime: activity.startTime || "00:00",
+              duration: Number(activity.duration) || 0,
+              type: activity.type || "other"
+            }))
+          }))
+        },
+        tripDates: {
+          startDate,
+          endDate
+        },
+        tripName: `Trip to ${flightData.destination || 'Destination'}`
+      };
+
+      console.log('Sending reservation data:', JSON.stringify(reservationData, null, 2));
+
+      const response = await fetch('https://localhost:5193/api/Reservation/reserve', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(itineraryData)
+        body: JSON.stringify(reservationData)
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save itinerary');
+        const errorText = await response.text();
+        console.error('Server error response:', errorText);
+        if (response.status === 401) {
+          navigate('/login', { 
+            state: { message: 'Please log in to save your itinerary' } 
+          });
+          return;
+        }
+        throw new Error(errorText || 'Failed to save reservation');
       }
 
-      // Show success message and redirect to profile
       navigate('/profile', { 
-        state: { 
-          message: 'Trip itinerary saved successfully!' 
-        } 
+        state: { message: 'Trip itinerary saved successfully!' } 
       });
 
     } catch (error) {
-      console.error('Error saving itinerary:', error);
-      setSaveError(error instanceof Error ? error.message : 'Failed to save itinerary');
+      console.error('Error saving reservation:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to save reservation');
     } finally {
       setIsSaving(false);
     }

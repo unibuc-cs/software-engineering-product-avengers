@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +31,24 @@ builder.Services.AddSwaggerGen();
 // Add singleton EmailService
 builder.Services.AddSingleton<EmailService>();
 
-
+// Add JWT Configuration
+var jwtKey = "your_very_long_secret_key_here_at_least_32_characters";
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
 
 // Configure Identity Options
 builder.Services.Configure<IdentityOptions>(options =>
@@ -48,6 +68,14 @@ builder.Services.AddHttpClient<AmadeusClient>(client =>
 
 builder.Services.AddHttpClient<GooglePlacesService>();
 
+builder.Services.AddHttpClient("ReservationClient", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:5193/");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+});
 
 // Configure CORS policy
 builder.Services.AddCors(options =>
@@ -89,6 +117,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddAuthorization();
 
+// Add this line with your other service registrations
+builder.Services.AddScoped<JwtService>();
 
 var app = builder.Build();
 

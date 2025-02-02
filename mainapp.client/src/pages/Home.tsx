@@ -6,7 +6,7 @@ import { useAppSelector } from '../hooks/redux';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAppSelector(state => state.user);
+  const { user } = useAppSelector(state => state.user);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -39,10 +39,10 @@ const Home: React.FC = () => {
   ];
 
   const handleStartAdventure = () => {
-    if (currentUser) {
-      navigate('/flights');
-    } else {
+    if (!user) {
       navigate('/profile');
+    } else {
+      navigate('/flights');
     }
   };
 

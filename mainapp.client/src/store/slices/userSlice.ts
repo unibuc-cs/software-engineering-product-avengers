@@ -3,17 +3,17 @@ import { User } from '../../types';
 import { logIn } from '../../api';
 
 interface UserState {
-  currentUser: User | null;
-  bookmarks: string[];
-  travelHistory: string[];
+  user: string | null;
+  token: string | null;
+  isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: UserState = {
-  currentUser: null,
-  bookmarks: [],
-  travelHistory: [],
+  user: localStorage.getItem('user'),
+  token: localStorage.getItem('token'),
+  isAuthenticated: Boolean(localStorage.getItem('token')),
   loading: false,
   error: null,
 };
@@ -22,6 +22,9 @@ export const loginUser = createAsyncThunk(
   'user/login',
   async (credentials: { email: string; password: string }) => {
     const response = await logIn(credentials);
+    // Store token in localStorage
+    localStorage.setItem('token', response.token);
+    localStorage.setItem('user', response.user);
     return response;
   }
 );
@@ -30,39 +33,32 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<User>) => {
-      state.currentUser = action.payload;
-    },
-    addBookmark: (state, action: PayloadAction<string>) => {
-      state.bookmarks.push(action.payload);
-    },
-    removeBookmark: (state, action: PayloadAction<string>) => {
-      state.bookmarks = state.bookmarks.filter(id => id !== action.payload);
-    },
-    addToHistory: (state, action: PayloadAction<string>) => {
-      state.travelHistory.push(action.payload);
-    },
     logout: (state) => {
-      state.currentUser = null;
-      state.bookmarks = [];
-      state.travelHistory = [];
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentUser = action.payload;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? null;
+        state.error = action.error.message || 'Login failed';
       });
   },
 });
 
-export const { setUser, addBookmark, removeBookmark, addToHistory, logout } = userSlice.actions;
+export const { logout } = userSlice.actions;
 export default userSlice.reducer; 

@@ -28,7 +28,7 @@ namespace mainApp.Server.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-   [Authorize]
+    [Authorize]
     public class AccommodationsController : ControllerBase
     {
         private readonly GooglePlacesService _placeService;

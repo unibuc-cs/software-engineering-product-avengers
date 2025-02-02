@@ -25,60 +25,19 @@ interface DayPlan {
   }[];
 }
 
-interface TripRequest {
-  flightDetails: {
-    itineraries: Array<{
-      segments: Array<{
-        departureAirport: string;
-        departureTime: string;
-        arrivalAirport: string;
-        arrivalTime: string;
-        carrierCode: string;
-        flightNumber: string;
-        duration: string;
-      }>;
-    }>;
-    price: {
-      currency: string;
-      total: string;
-      base: string;
-    };
-  };
-  hotelDetails: {
-    placeId: string;
-    address: string;
-    name: string;
-    rating: number;
-    totalUserRating: number;
-    location: {
-      latitude: number;
-      longitude: number;
-    };
-    price: number;
-    photos: string[];
-  };
-  itinerary: {
-    name: string;
-    startDate: string;
-    endDate: string;
-    dayPlans: Array<{
-      dayPlanId: number;
-      date: string;
-      activities: Array<{
-        id: number;
-        activityId: number;
-        name: string;
-        startTime: string;
-        duration: number;
-        type: string;
-      }>;
-    }>;
-  };
-  tripDates: {
-    startDate: string;
-    endDate: string;
-  };
-  tripName: string;
+interface ItineraryRequest {
+  startDate: string;
+  endDate: string;
+  dayPlans: {
+    date: string;
+    activities: {
+      id: string;
+      name: string;
+      startTime: string;
+      duration: number;
+      type: string;
+    }[];
+  }[];
 }
 
 const TimeSlotInfo: React.FC<{ selectedDay: number; flightTimes: { arrival: Date; departure: Date } }> = ({ 
@@ -292,82 +251,56 @@ const Itinerary: React.FC = () => {
     setSaveError(null);
 
     try {
+      // Get stored data
       const flightData = JSON.parse(localStorage.getItem('selectedFlight') || '{}');
-      const hotelData = JSON.parse(localStorage.getItem('selectedAccommodation') || '{}');
-      const activitiesData = JSON.parse(localStorage.getItem('selectedAttractions') || '[]');
-
-      // Check if we have all required data
-      if (!flightData?.flight?.itineraries) {
-        throw new Error('Flight itineraries missing');
-      }
-
-      const tripRequest: TripRequest = {
-        flightDetails: {
-          itineraries: flightData.flight.itineraries,
-          price: flightData.flight.price || {
-            currency: 'USD',
-            total: '0',
-            base: '0'
-          }
-        },
-        hotelDetails: {
-          placeId: hotelData.placeId || '',
-          address: hotelData.address || '',
-          name: hotelData.name || '',
-          rating: hotelData.rating || 0,
-          totalUserRating: hotelData.totalUserRating || 0,
-          location: {
-            latitude: hotelData.location?.latitude || 0,
-            longitude: hotelData.location?.longitude || 0
-          },
-          price: hotelData.price || 0,
-          photos: hotelData.photos || []
-        },
-        itinerary: {
-          name: `Trip to ${hotelData.name}`,
-          startDate: flightData.flight.itineraries[0].segments[0].departureTime,
-          endDate: flightData.flight.itineraries[1].segments[0].arrivalTime,
-          dayPlans: dayPlans.map((day, index) => ({
-            dayPlanId: index + 1,
-            date: day.date.toISOString().split('T')[0],
-            activities: day.activities.map((activity, actIndex) => ({
-              id: parseInt(activity.id),
-              activityId: parseInt(activity.id) * 2,
-              name: activity.name,
-              startTime: activity.startTime,
-              duration: parseInt(activity.duration.toString()),
-              type: activity.type
-            }))
-          })),
-        },
-        tripDates: {
-          startDate: flightData.flight.itineraries[0].segments[0].departureTime,
-          endDate: flightData.flight.itineraries[1].segments[0].arrivalTime
-        },
-        tripName: `Trip to ${hotelData.name}`
+      const accommodationData = JSON.parse(localStorage.getItem('selectedAccommodation') || '{}');
+      
+      // Format the itinerary data
+      const itineraryData: ItineraryRequest = {
+        startDate: new Date(flightData.flight?.itineraries[0]?.segments[0]?.departureTime).toISOString(),
+        endDate: new Date(flightData.flight?.itineraries[1]?.segments[0]?.departureTime).toISOString(),
+        dayPlans: dayPlans.map(day => ({
+          date: day.date.toISOString(),
+          activities: day.activities.map(activity => ({
+            id: activity.id,
+            name: activity.name,
+            startTime: activity.startTime,
+            duration: activity.duration,
+            type: activity.type
+          }))
+        }))
       };
 
-      const response = await fetch('https://localhost:5193/api/Reservation/reserve', {
+      // Get the auth token from localStorage or your auth state
+      const token = localStorage.getItem('token'); // Or from your auth state
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      // Save the itinerary
+      const response = await fetch('https://localhost:5193/api/Itinerary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(tripRequest)
+        body: JSON.stringify(itineraryData)
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save trip');
+        throw new Error('Failed to save itinerary');
       }
 
-      // Clear localStorage
-      localStorage.removeItem('selectedFlight');
-      localStorage.removeItem('selectedAccommodation');
-      localStorage.removeItem('selectedAttractions');
+      // Show success message and redirect to profile
+      navigate('/profile', { 
+        state: { 
+          message: 'Trip itinerary saved successfully!' 
+        } 
+      });
 
-      navigate('/profile');
     } catch (error) {
-      setSaveError((error as Error).message);
+      console.error('Error saving itinerary:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to save itinerary');
     } finally {
       setIsSaving(false);
     }
@@ -554,19 +487,22 @@ const Itinerary: React.FC = () => {
       <motion.button
         onClick={handleFinishPlanning}
         disabled={isSaving}
-        className={`px-6 py-3 rounded-xl shadow-lg flex items-center gap-2
-          ${isSaving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+        className={`fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 z-10
+          ${isSaving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
       >
         {isSaving ? (
           <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
         ) : (
-          'Save Trip'
+          <>
+            Save Trip
+            <FaArrowRight />
+          </>
         )}
       </motion.button>
 
       {saveError && (
-        <div className="text-red-500 mt-2">
-          Error saving trip: {saveError}
+        <div className="fixed bottom-20 right-6 p-4 bg-red-100 text-red-600 rounded-lg shadow-lg">
+          {saveError}
         </div>
       )}
     </motion.div>

@@ -23,7 +23,7 @@ public class ItineraryController : ControllerBase
         _userManager = userManager;
     }
 
-    [HttpPost]
+    [HttpPost("create")]
     public async Task<IActionResult> CreateItinerary([FromBody] ItineraryResponseDto dto)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -31,16 +31,41 @@ public class ItineraryController : ControllerBase
 
         var itinerary = new Itinerary
         {
-            Userid = user.Id,
-            StartDate = dto.StartDate,
-            EndDate = dto.EndDate,
-            DayPlans = dto.DayPlans
+            User = user,
+            startDate = dto.StartDate,
+            EndDate = dto.EndDate
+           
         };
 
         _dbContext.Itineraries.Add(itinerary);
         await _dbContext.SaveChangesAsync();
+        foreach (DayPlanDTO dp in dto.DayPlans)
+        {
+            var dayplan = new DayPlan
+            {
+                Date = dp.Date,
+                ItineraryId = itinerary.ItineraryId
+            };
+            _dbContext.DayPlans.Add(dayplan);
+            await _dbContext.SaveChangesAsync();
+            foreach (ActivityDto adto in dp.activities)
+            {
+                var activity = new Activity
+                {
+                   Name = adto.Name,
+                   StartTime = adto.StartTime,
+                   Duration = adto.Duration,
+                   Type = adto.Type,
+                   DayPlanId = dayplan.DayPlanId
+                };
+                _dbContext.Activities.Add(activity);
+            }
+        }
+       
 
-        return Ok(new { Message = "Itinerary created", ItineraryId = itinerary.ItineraryId });
+        await _dbContext.SaveChangesAsync();
+
+        return StatusCode(200,new { Message = "Itinerary created", ItineraryId = itinerary.ItineraryId });
     }
 
     [HttpGet("{id}")]
@@ -52,7 +77,7 @@ public class ItineraryController : ControllerBase
         var itinerary = await _dbContext.Itineraries
             .Include(i => i.DayPlans)
             .ThenInclude(dp => dp.Activities)
-            .FirstOrDefaultAsync(i => i.ItineraryId == id && i.Userid == user.Id);
+            .FirstOrDefaultAsync(i => i.ItineraryId == id && i.UserId == user.Id);
 
         if (itinerary == null) return NotFound(new { Message = "Itinerary not found" });
 
@@ -66,13 +91,13 @@ public class ItineraryController : ControllerBase
 
         var itinerary = await _dbContext.Itineraries
             .Include(i => i.DayPlans)
-            .FirstOrDefaultAsync(i => i.ItineraryId == id && i.Userid == user.Id);
+            .FirstOrDefaultAsync(i => i.ItineraryId == id && i.UserId == user.Id);
 
         if (itinerary == null) return NotFound(new { Message = "Itinerary not found" });
 
-        itinerary.StartDate = dto.StartDate;
+        itinerary.startDate = dto.StartDate;
         itinerary.EndDate = dto.EndDate;
-        itinerary.DayPlans = dto.DayPlans;
+       // itinerary.DayPlans = dto.DayPlans;
 
         _dbContext.Itineraries.Update(itinerary);
         await _dbContext.SaveChangesAsync();
@@ -88,7 +113,7 @@ public class ItineraryController : ControllerBase
         if (user == null) return Unauthorized();
 
         var itinerary = await _dbContext.Itineraries
-            .FirstOrDefaultAsync(i => i.ItineraryId == id && i.Userid == user.Id);
+            .FirstOrDefaultAsync(i => i.ItineraryId == id && i.UserId == user.Id);
 
         if (itinerary == null) return NotFound(new { Message = "Itinerary not found" });
 

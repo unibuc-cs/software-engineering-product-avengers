@@ -13,192 +13,18 @@ interface BookmarkedItem {
   details?: string;
 }
 
-interface TripData {
-  id: string;
-  destination: string;
-  date: string;
-  duration: string;
-  image: string;
-  outboundFlight: {
-    airline: string;
-    flightNumber: string;
-    departure: {
-      time: string;
-      airport: string;
-      terminal: string;
-    };
-    arrival: {
-      time: string;
-      airport: string;
-      terminal: string;
-    };
-  };
-  returnFlight: {
-    airline: string;
-    flightNumber: string;
-    departure: {
-      time: string;
-      airport: string;
-      terminal: string;
-    };
-    arrival: {
-      time: string;
-      airport: string;
-      terminal: string;
-    };
-  };
-  accommodation: {
-    name: string;
-    address: string;
-    checkIn: string;
-    checkOut: string;
-    roomType: string;
-    amenities: string[];
-  };
-  days: Array<{
-    date: string;
-    activities: Array<{
-      id: string;
-      name: string;
-      time: string;
-      duration: string;
-      location: string;
-      type: 'attraction' | 'restaurant' | 'museum' | 'park' | 'accommodation';
-    }>;
-  }>;
-}
 
+interface userProfile {
+    email: string;
+    fullName: string;
+   
+}
 const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate(); // Use useNavigate instead of useHistory
   const { currentUser } = useAppSelector(state => state.user);
   const [bookmarkedItems, setBookmarkedItems] = useState<BookmarkedItem[]>([]);
-  const [travelHistory, setTravelHistory] = useState<TripData[]>([
-    {
-      id: '1',
-      destination: 'Paris, France',
-      date: '2024-01-15',
-      duration: '7 days',
-      image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=500&q=80',
-      outboundFlight: {
-        airline: 'Air France',
-        flightNumber: 'AF1234',
-        departure: {
-          time: '10:30 AM',
-          airport: 'JFK International',
-          terminal: 'Terminal 4'
-        },
-        arrival: {
-          time: '11:45 PM',
-          airport: 'Charles de Gaulle',
-          terminal: 'Terminal 2E'
-        }
-      },
-      returnFlight: {
-        airline: 'Air France',
-        flightNumber: 'AF1235',
-        departure: {
-          time: '1:30 PM',
-          airport: 'Charles de Gaulle',
-          terminal: 'Terminal 2E'
-        },
-        arrival: {
-          time: '3:45 PM',
-          airport: 'JFK International',
-          terminal: 'Terminal 4'
-        }
-      },
-      accommodation: {
-        name: 'Le Grand Paris Hotel',
-        address: '1 Rue de Rivoli, 75001 Paris, France',
-        checkIn: '3:00 PM',
-        checkOut: '11:00 AM',
-        roomType: 'Deluxe Suite with Eiffel Tower View',
-        amenities: ['Free Wi-Fi', 'Room Service', 'Spa Access', 'Breakfast Included']
-      },
-      days: [
-        {
-          date: '2024-01-15',
-          activities: [
-            {
-              id: '1',
-              name: 'Hotel Check-in & Rest',
-              time: '3:00 PM',
-              duration: '2 hours',
-              location: 'Le Grand Paris Hotel',
-              type: 'accommodation'
-            },
-            {
-              id: '2',
-              name: 'Welcome Dinner at Le Jules Verne',
-              time: '7:00 PM',
-              duration: '2 hours',
-              location: 'Eiffel Tower, 2nd Floor',
-              type: 'restaurant'
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: '2',
-      destination: 'Tokyo, Japan',
-      date: '2023-11-20',
-      duration: '10 days',
-      image: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=500&q=80',
-      outboundFlight: {
-        airline: 'Japan Airlines',
-        flightNumber: 'JL5402',
-        departure: {
-          time: '11:00 AM',
-          airport: 'JFK International',
-          terminal: 'Terminal 1'
-        },
-        arrival: {
-          time: '3:15 PM',
-          airport: 'Narita International',
-          terminal: 'Terminal 2'
-        }
-      },
-      returnFlight: {
-        airline: 'Japan Airlines',
-        flightNumber: 'JL5403',
-        departure: {
-          time: '5:00 PM',
-          airport: 'Narita International',
-          terminal: 'Terminal 2'
-        },
-        arrival: {
-          time: '7:30 PM',
-          airport: 'JFK International',
-          terminal: 'Terminal 1'
-        }
-      },
-      accommodation: {
-        name: 'Park Hyatt Tokyo',
-        address: '3-7-1-2 Nishi Shinjuku, Tokyo',
-        checkIn: '3:00 PM',
-        checkOut: '11:00 AM',
-        roomType: 'Deluxe Room with City View',
-        amenities: ['Free Wi-Fi', 'Pool', 'Spa', 'Restaurant']
-      },
-      days: [
-        {
-          date: '2023-11-20',
-          activities: [
-            {
-              id: '1',
-              name: 'Hotel Check-in',
-              time: '4:00 PM',
-              duration: '1 hour',
-              location: 'Park Hyatt Tokyo',
-              type: 'accommodation'
-            }
-          ]
-        }
-      ]
-    },
-  ]);
+  const [travelHistory, setTravelHistory] = useState<any[]>([]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -242,124 +68,14 @@ const Profile: React.FC = () => {
         destination: 'Paris, France',
         date: '2024-01-15',
         duration: '7 days',
-        image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=500&q=80',
-        outboundFlight: {
-          airline: 'Air France',
-          flightNumber: 'AF1234',
-          departure: {
-            time: '10:30 AM',
-            airport: 'JFK International',
-            terminal: 'Terminal 4'
-          },
-          arrival: {
-            time: '11:45 PM',
-            airport: 'Charles de Gaulle',
-            terminal: 'Terminal 2E'
-          }
-        },
-        returnFlight: {
-          airline: 'Air France',
-          flightNumber: 'AF1235',
-          departure: {
-            time: '1:30 PM',
-            airport: 'Charles de Gaulle',
-            terminal: 'Terminal 2E'
-          },
-          arrival: {
-            time: '3:45 PM',
-            airport: 'JFK International',
-            terminal: 'Terminal 4'
-          }
-        },
-        accommodation: {
-          name: 'Le Grand Paris Hotel',
-          address: '1 Rue de Rivoli, 75001 Paris, France',
-          checkIn: '3:00 PM',
-          checkOut: '11:00 AM',
-          roomType: 'Deluxe Suite with Eiffel Tower View',
-          amenities: ['Free Wi-Fi', 'Room Service', 'Spa Access', 'Breakfast Included']
-        },
-        days: [
-          {
-            date: '2024-01-15',
-            activities: [
-              {
-                id: '1',
-                name: 'Hotel Check-in & Rest',
-                time: '3:00 PM',
-                duration: '2 hours',
-                location: 'Le Grand Paris Hotel',
-                type: 'accommodation'
-              },
-              {
-                id: '2',
-                name: 'Welcome Dinner at Le Jules Verne',
-                time: '7:00 PM',
-                duration: '2 hours',
-                location: 'Eiffel Tower, 2nd Floor',
-                type: 'restaurant'
-              }
-            ]
-          }
-        ]
+        image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=500&q=80'
       },
       {
         id: '2',
         destination: 'Tokyo, Japan',
         date: '2023-11-20',
         duration: '10 days',
-        image: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=500&q=80',
-        outboundFlight: {
-          airline: 'Japan Airlines',
-          flightNumber: 'JL5402',
-          departure: {
-            time: '11:00 AM',
-            airport: 'JFK International',
-            terminal: 'Terminal 1'
-          },
-          arrival: {
-            time: '3:15 PM',
-            airport: 'Narita International',
-            terminal: 'Terminal 2'
-          }
-        },
-        returnFlight: {
-          airline: 'Japan Airlines',
-          flightNumber: 'JL5403',
-          departure: {
-            time: '5:00 PM',
-            airport: 'Narita International',
-            terminal: 'Terminal 2'
-          },
-          arrival: {
-            time: '7:30 PM',
-            airport: 'JFK International',
-            terminal: 'Terminal 1'
-          }
-        },
-        accommodation: {
-          name: 'Park Hyatt Tokyo',
-          address: '3-7-1-2 Nishi Shinjuku, Tokyo',
-          checkIn: '3:00 PM',
-          checkOut: '11:00 AM',
-          roomType: 'Deluxe Room with City View',
-          amenities: ['Free Wi-Fi', 'Pool', 'Spa', 'Restaurant']
-        },
-        days: [
-          {
-            date: '2023-11-20',
-            activities: [
-              {
-                id: '1',
-                name: 'Hotel Check-in',
-                time: '4:00 PM',
-                duration: '1 hour',
-                location: 'Park Hyatt Tokyo',
-                type: 'accommodation'
-              }
-            ]
-          }
-        ]
+        image: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=500&q=80'
       }
     ]);
   }, []);
@@ -457,7 +173,6 @@ const Profile: React.FC = () => {
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                {currentUser.name}
               </h1>
               <p className="text-gray-600">{currentUser.email}</p>
             </div>
@@ -531,8 +246,7 @@ const Profile: React.FC = () => {
                   <motion.div
                     key={trip.id}
                     whileHover={{ scale: 1.02 }}
-                    className="relative overflow-hidden rounded-xl shadow-md group cursor-pointer"
-                    onClick={() => navigate('/travel-history', { state: { trip } })}
+                    className="relative overflow-hidden rounded-xl shadow-md group"
                   >
                     <img 
                       src={trip.image} 

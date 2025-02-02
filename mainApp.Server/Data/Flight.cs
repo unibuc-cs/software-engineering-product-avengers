@@ -6,8 +6,11 @@ namespace mainApp.Server.Data
     {
         [Key]
         public int Id { get; set; }
+        
+        public string DepartureAirport { get; set; }
         [Required]
         public string Destination { get; set; }
+       
         public int Duration { get; set; }
         public DateTime Arrival { get; set; }
         public DateTime Departure { get; set; }

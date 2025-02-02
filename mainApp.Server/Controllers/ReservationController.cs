@@ -8,19 +8,20 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Net;
 
 [ApiController]
 [Route("api/[controller]")]
 [Authorize] 
 public class ReservationController : ControllerBase
 {
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ApplicationDbContext _dbContext;
 
-    public ReservationController(HttpClient httpClient, UserManager<ApplicationUser> userManager, ApplicationDbContext dbContext)
+    public ReservationController(IHttpClientFactory httpClientFactory, UserManager<ApplicationUser> userManager, ApplicationDbContext dbContext)
     {
-        _httpClient = httpClient;
+        _httpClientFactory = httpClientFactory;
         _userManager = userManager;
         _dbContext = dbContext;
     }
@@ -33,9 +34,28 @@ public class ReservationController : ControllerBase
 
         string userId = user.Id;
 
-        var flightResponse = await _httpClient.PostAsync(
-            "https://yourapi.com/api/flights/book",
-            new StringContent(JsonSerializer.Serialize(request.FlightDetails), Encoding.UTF8, "application/json")
+        var handler = new HttpClientHandler
+        {
+            UseCookies = true,
+            CookieContainer = new CookieContainer()
+        };
+        if (HttpContext.Request.Cookies.TryGetValue(".AspNetCore.Identity.Application", out var authCookie))
+        {
+            // Adaugă cookie-ul pentru domeniul API-ului extern
+            handler.CookieContainer.Add(new Uri("https://localhost:5193"),
+                new Cookie(".AspNetCore.Identity.Application", authCookie));
+        }
+
+        // Creează HttpClient-ul folosind handler-ul configurat
+        using var client = new HttpClient(handler)
+        {
+           
+            Timeout = TimeSpan.FromMinutes(10)
+        };
+
+        var flightResponse = await client.PostAsync(
+            "https://localhost:5193/api/Tickets/reserve",
+            new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json")
         );
 
         if (!flightResponse.IsSuccessStatusCode)
@@ -43,33 +63,32 @@ public class ReservationController : ControllerBase
 
         var flightData = await flightResponse.Content.ReadAsStringAsync();
 
-        var hotelResponse = await _httpClient.PostAsync(
-            "https://yourapi.com/api/hotels/book",
-            new StringContent(JsonSerializer.Serialize(request.HotelDetails), Encoding.UTF8, "application/json")
+        var hotelResponse = await client.PostAsync(
+            "https://localhost:5193/api/Accommodations/reserve",
+            new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json")
         );
+
 
         if (!hotelResponse.IsSuccessStatusCode)
             return StatusCode((int)hotelResponse.StatusCode, "Hotel reservation failed");
 
         var hotelData = await hotelResponse.Content.ReadAsStringAsync();
 
-        var itinerary = new Itinerary
-        {
-            Userid = userId,
-            StartDate = request.TripDates.StartDate,
-            EndDate = request.TripDates.EndDate,
-            DayPlans = request.Itinerary.DayPlans
-        };
+        var itineraryResponse = await client.PostAsync(
+           "https://localhost:5193/api/Itinerary/create",
+           new StringContent(JsonSerializer.Serialize(request.Itinerary), Encoding.UTF8, "application/json")
+       );
 
-        _dbContext.Itineraries.Add(itinerary);
+        if (!itineraryResponse.IsSuccessStatusCode)
+            return StatusCode((int)itineraryResponse.StatusCode, "Itinerary reservation failed");
+        var itineraryData = await itineraryResponse.Content.ReadAsStringAsync();
+
         await _dbContext.SaveChangesAsync();
 
         return Ok(new
         {
             Message = "Reservation successful",
-            Flight = JsonSerializer.Deserialize<object>(flightData),
-            Hotel = JsonSerializer.Deserialize<object>(hotelData),
-            ItineraryId = itinerary.ItineraryId
+         
         });
     }
 }

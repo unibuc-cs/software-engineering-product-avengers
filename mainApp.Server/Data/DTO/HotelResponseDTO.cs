@@ -1,9 +1,14 @@
 ﻿namespace mainApp.Server.Data.DTO
 {
    
+    public class AccommodationAndFlight{
+    public Accommodation hotelDetails { get; set; }
+        public FlightResponseDTO flightDetails { get; set; }
 
+}
     public class Accommodation
     {
+        
         public string placeId { get; set; }
        public string address {  get; set; }
        public string name { get; set; }
@@ -13,6 +18,7 @@
         public int price { get; set;}
         public List<string> photos { get; set; }
 
+        
         
     }
 

@@ -12,6 +12,7 @@ namespace mainApp.Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class TicketsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -23,21 +24,22 @@ namespace mainApp.Server.Controllers
             _userManager = userManager;
         }
 
-        private async Task SaveTicketFromReservationResponse(ReservationTicketRequestDTO reservationResponse, string userId)
+        private async Task SaveTicketFromReservationResponse(ReservationTicketRequestDTO reservationResponse)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
                 throw new Exception("User not found.");
             }
             Flight? previousFlight = null;
             Flight? firstFlight = null;
-            foreach (var flightOffer in reservationResponse.Flight.Itineraries)
+            foreach (var flightOffer in reservationResponse.flightDetails.Itineraries)
             {
                 foreach (var segment in flightOffer.Segments)
                 {
                     var flight = new Flight
                     {
+                        DepartureAirport = segment.DepartureAirport,
                         Destination = segment.ArrivalAirport,
                         Departure = segment.DepartureTime,
                         Arrival = segment.ArrivalTime,
@@ -65,28 +67,11 @@ namespace mainApp.Server.Controllers
             {
                 var ticket = new Ticket
                 {
-                    TotalPrice = Convert.ToInt32(reservationResponse.Flight.Price.Total),
-                    Flights = firstFlight,
-                    User = user,
+                    TotalPrice = Convert.ToInt32(Convert.ToDouble(reservationResponse.flightDetails.Price.Total)),
+                   FlightsId = firstFlight.Id,
+                    User = user
                 };
-                Random rnd = new Random();
-                foreach (var passanger in reservationResponse.Passengers)
-                {
-                    string seatNumber;
-                    do
-                    {
-                        seatNumber = rnd.Next(1, 100).ToString();
-                    } while (_context.Seats.Any(s => s.SeatNumber == seatNumber));
-                    var seat = new Seat
-                    {
-                        FullName = passanger.FullName,
-                        SeatNumber = seatNumber,
-                        BagajCala = passanger.BagajCala,
-                        BagajMana = passanger.BagajMana,
-                        Ticket = ticket
-                    };
-                    _context.Seats.Add(seat);
-                }
+               
 
                 _context.Tickets.Add(ticket);
                 await _context.SaveChangesAsync();
@@ -95,13 +80,13 @@ namespace mainApp.Server.Controllers
 
         [HttpPost("reserve")]
         [Authorize]
-        public async Task<IActionResult> ReserveTicket([FromBody] ReservationTicketRequestDTO reservationResponse, [FromQuery] string userId)
+        public async Task<IActionResult> ReserveTicket([FromBody] ReservationTicketRequestDTO reservationResponse)
         {
             try
             {
-                await SaveTicketFromReservationResponse(reservationResponse, userId);
+                await SaveTicketFromReservationResponse(reservationResponse);
 
-                return Ok(new { Message = "Ticket reserved successfully."});
+                return StatusCode(200,new { Message = "Ticket reserved successfully."});
             }
             catch (Exception ex)
             {

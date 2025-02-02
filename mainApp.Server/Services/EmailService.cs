@@ -10,7 +10,7 @@ public class EmailService
     private const string _apiKey = "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";
     private const string senderEmail = "travelmonster42@gmail.com";
    
-    public async Task SendEmailAsync(string toEmail, string subject, string body)
+    public virtual async Task SendEmailAsync(string toEmail, string subject, string body)
     {
         
         var client = new SendGridClient(_apiKey);

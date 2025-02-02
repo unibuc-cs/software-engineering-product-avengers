@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "jest"
+    "test:unit": "jest",
+    "test:cypress": "cypress open"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.0.0",

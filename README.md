@@ -52,8 +52,7 @@ ACTION: App organizes items in a daily schedule, syncs with the user's calendar 
 
 OUTPUT: A day-by-day travel itinerary with booking details, activity times, and offline access
 
-# User Stories
-
+# [User Stories](https://github.com/orgs/unibuc-cs/projects/59)
 
 
 # Design
@@ -125,7 +124,7 @@ The Component Diagram breaks down the Travel Monster application into its key co
 
 
 
-# Backlog
+# [Backlog](https://plutonieriicapsuna.atlassian.net/jira/software/projects/SCRUM/boards/1/backlog)
 
 # QA
 

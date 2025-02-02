@@ -124,9 +124,10 @@ The Component Diagram breaks down the Travel Monster application into its key co
 - Each service has its own controller and repository for managing data and operations .
 
 
-# Requirements
 
 # Backlog
+
+# QA
 
 ### Components to be Tested
 1. Backend

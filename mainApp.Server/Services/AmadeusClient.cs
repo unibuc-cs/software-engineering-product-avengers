@@ -82,7 +82,7 @@ public class AmadeusClient
 
 
 
-    public async Task<string> GetFlightOffersAsync(string origin, string destination, string departureDate, string returnDate, int numberofadults)
+    public virtual async Task<string> GetFlightOffersAsync(string origin, string destination, string departureDate, string returnDate, int numberofadults)
     {
         if (string.IsNullOrEmpty(_accessToken))
         {

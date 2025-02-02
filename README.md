@@ -157,8 +157,12 @@ The Component Diagram breaks down the Travel Monster application into its key co
 ### Backend Testing
 1. .NET Testing
    - Using xUnit framework
+  
+![Backend Code](https://github.com/AlexandraMarinaBerlinschi/poze-is/blob/main/WhatsApp%20Image%202025-02-02%20at%2012.07.40.jpeg)
+
 2. Endpoint Testing
    - Using Postman/Swagger
+
 
 ### Frontend Testing
 1. React + TypeScript Testing

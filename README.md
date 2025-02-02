@@ -127,3 +127,95 @@ The Component Diagram breaks down the Travel Monster application into its key co
 # Requirements
 
 # Backlog
+
+### Components to be Tested
+1. Backend
+2. Frontend
+   
+### Testing Levels
+1. Unit Testing
+2. Integration Testing
+3. System Testing
+4. Acceptance Testing
+
+## Testing Process
+
+### SDLC Testing Timeline
+- Unit tests are performed during the development phase
+- Integration tests are conducted after the implementation phase
+- Acceptance tests are executed before delivery
+
+## Testing Methods
+1. **Unit Testing**: Implemented for React + TypeScript Frontend and .NET Backend
+2. **Integration Testing**: Verification of communication between Frontend and Backend
+3. **End-to-End (E2E) Testing**: Testing complete application workflows
+4. **Load/Performance Testing**: Ensuring scalability
+
+## Implementation Details
+
+### Backend Testing
+1. .NET Testing
+   - Using xUnit framework
+2. Endpoint Testing
+   - Using Postman/Swagger
+
+### Frontend Testing
+1. React + TypeScript Testing
+   - Using Jest and React Testing Library
+2. Integration Tests for Major Workflows
+   
+![Jest testing](https://github.com/AlexandraMarinaBerlinschi/poze-is/blob/main/WhatsApp%20Image%202025-02-02%20at%2012.51.54.jpeg)
+
+
+3. E2E Testing
+   - Using Cypress
+![Cypruss testing](https://github.com/AlexandraMarinaBerlinschi/poze-is/blob/main/WhatsApp%20Image%202025-02-02%20at%2012.49.30.jpeg)
+![Cypruss testing](https://github.com/AlexandraMarinaBerlinschi/poze-is/blob/main/WhatsApp%20Image%202025-02-02%20at%2012.49.30%20(1).jpeg)
+
+
+
+### CI/CD Analysis
+- Implemented using Azure Pipelines
+
+## Security Analysis
+
+### Major Security Risks
+
+#### Backend Risks
+
+1. **SQL Injection**
+   - Risk: Users could input malicious code in forms to gain unauthorized data access
+   - Solution: 
+     - Using EF ORM
+     - Query parameterization to prevent SQL injection
+
+2. **Authentication**
+   - Risk: Improper authentication management could allow unauthorized access to sensitive resources
+   - Solutions:
+     - OAuth 2.0 implementation
+     - JWT utilization
+     - Prevention of session hijacking through HttpOnly, Secure, and SameSite cookie settings
+
+3. **Sensitive Data Exposure**
+   - Risk: Protection of passwords, API keys, and user information from data leaks
+   - Solutions:
+     - Password hashing using bcrypt
+     - Proper configuration of appsettings.json to avoid hardcoding sensitive data
+
+#### Frontend Risks
+
+1. **Unsafe Dependencies**
+   - Risk: Vulnerabilities in npm packages
+   - Solutions:
+     - Using npm audit for identification
+     - Regular updates using npm update and npm audit fix
+
+#### API Risks
+
+1. **API Key Security**
+   - Risk: Potential compromise of Google APIs and Amadeus API keys
+   - Solutions:
+     - Storing API keys in a Secrets Manager instead of source code
+     - Restricting API key usage through IP whitelisting
+
+

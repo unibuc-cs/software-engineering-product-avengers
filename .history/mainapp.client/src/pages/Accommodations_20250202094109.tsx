@@ -353,7 +353,6 @@ const Accommodations: React.FC = () => {
                     key={hotel.place_id || index}
                     variants={itemVariants}
                     whileHover={{ y: -5, scale: 1.02 }}
-                    role="button"
                     className={`bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden relative
                       ${selectedHotel?.place_id === hotel.place_id ? 'ring-2 ring-blue-500' : ''}`}
                     onClick={() => handleHotelClick(hotel)}

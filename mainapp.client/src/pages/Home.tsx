@@ -2,9 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaPlaneDeparture, FaHotel, FaMapMarkedAlt, FaRoute } from 'react-icons/fa';
+import { useAppSelector } from '../hooks/redux';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAppSelector(state => state.user);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -36,6 +38,14 @@ const Home: React.FC = () => {
     { step: 4, title: 'View Itinerary', desc: 'Review your journey', icon: <FaRoute className="w-6 h-6" /> }
   ];
 
+  const handleStartAdventure = () => {
+    if (currentUser) {
+      navigate('/flights');
+    } else {
+      navigate('/profile');
+    }
+  };
+
   return (
     <motion.div 
       className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50"
@@ -63,7 +73,7 @@ const Home: React.FC = () => {
             <motion.button
               whileHover={{ scale: 1.05, boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/flights')}
+              onClick={handleStartAdventure}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-4 rounded-xl text-xl font-semibold transition-all duration-300 shadow-lg hover:from-blue-700 hover:to-indigo-700"
             >
               <FaPlaneDeparture className="inline-block mr-3 mb-1" />

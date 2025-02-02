@@ -8,6 +8,7 @@ import Itinerary from './pages/Itinerary';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import TravelHistory from './pages/TravelHistory';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/travel-history" element={<TravelHistory />} />
           </Routes>
         </main>
       </div>
